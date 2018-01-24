@@ -1,0 +1,44 @@
+#@key_label  "name"
+#@meta_label "type"
+
+[name="flreconstruct.plugins" type="flreconstruct::section"]
+plugins : string[4] = "Falaise_CAT" \
+	  	      "TrackFit" \
+		      "Falaise_TrackFit" \
+              "SimulAna" \
+
+[name="pipeline" type="dpp::chain_module"]
+modules : string[5] = "CalibrateTracker" \
+	  	      "CalibrateCalorimeters" \
+		      "CATTrackerClusterizer" \
+		      "TrackFitting" \
+              "SimulAna" \
+		      "Dump"
+
+[name="CalibrateTracker" type="snemo::processing::mock_tracker_s2c_module"]
+logging.priority : string = "warning"
+
+[name="CalibrateCalorimeters" type="snemo::processing::mock_calorimeter_s2c_module"]
+logging.priority : string = "warning"
+
+[name="CATTrackerClusterizer" type="snemo::reconstruction::cat_tracker_clustering_module"]
+TPC.processing_prompt_hits    : boolean = true
+TPC.processing_delayed_hits   : boolean = true
+
+#@description CAT logging level
+CAT.level : string = "mute"
+
+[name="TrackFitting" type="snemo::reconstruction::trackfit_tracker_fitting_module"]
+fitting_models		: string[2] = "helix" "line"
+line.only_guess		: string[4] = "BB" "TB" "BT" "TT"
+hilix.only_guess	: string[8] = "BBB" "BBT" "BTT" "TBB" "TBT" "TTB" "BTB" "TTT"
+
+
+[name="SimulAna" type="SimulAna"]
+logging.priority : string = "error"
+
+# #@description ROOT filename
+# filename : string as path = "/tmp/MyModule.root"
+
+[name="Dump" type="dpp::dump_module"]
+
