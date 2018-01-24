@@ -1,3 +1,0 @@
-/Users/minotti/SuperNEMO/Tests/Module_SimulAna_build/CMakeFiles/rebuild_cache.dir
-/Users/minotti/SuperNEMO/Tests/Module_SimulAna_build/CMakeFiles/edit_cache.dir
-/Users/minotti/SuperNEMO/Tests/Module_SimulAna_build/CMakeFiles/SimulAna.dir

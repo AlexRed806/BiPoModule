@@ -1,0 +1,20 @@
+#@key_label  "name"
+#@meta_label "type"
+
+[name="flsimulate" type="flsimulate::section"]
+numberOfEvents : integer = 100000
+
+[name="flsimulate.variantService" type="flsimulate::section"]
+settings : string[4] = "primary_events:generator=Bi214" \
+	   	       "vertexes:generator=field_wire_bulk" \
+		       "geometry:layout=Basic" \
+		       "simulation:output_profile=all_details"
+
+
+
+[name="flsimulate.simulation" type="flsimulate::section"]
+rngEventGeneratorSeed         : integer = 314159
+rngVertexGeneratorSeed        : integer = 765432
+rngGeant4GeneratorSeed        : integer = 123456
+rngHitProcessingGeneratorSeed : integer = 987654
+#output_profile : string[1] = "all_details"
