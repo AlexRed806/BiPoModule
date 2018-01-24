@@ -45,6 +45,16 @@ private:
     
     root_variables _root_variables_;
     
+    bool is_helix;
+    bool does_touch_foil;
+    bool does_touch_wall;
+    bool has_negtive_charge;
+    
+    unsigned int _number_of_electrons_;
+    unsigned int _number_of_foil_electrons_;
+    unsigned int _number_of_wall_electrons_;
+    unsigned int _number_of_negative_charge_electrons_;
+    
     DPP_MODULE_REGISTRATION_INTERFACE(SimulAna)
 
     

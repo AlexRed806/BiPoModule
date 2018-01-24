@@ -9,6 +9,11 @@
 
 //#include "</Users/minotti/SuperNEMO/sw/Falaise/install/include/falaise/snemo/datamodels/particle_track_data.h"
 #include <datamodels/particle_track_data.h>
+#include <datamodels/tracker_trajectory_data.h>
+#include <datamodels/tracker_trajectory_solution.h>
+#include <datamodels/base_trajectory_pattern.h>
+#include <datamodels/particle_track.h>
+
 #include <bayeux/mctools/simulated_data.h>
 #include <bayeux/mctools/base_step_hit.h>
 
@@ -47,6 +52,11 @@ void SimulAna::initialize(const datatools::properties & setup_,
     _root_tree_->Branch("sd.primary_electron_kinetic_energy", &_root_variables_.kinetic_energy);
     _root_tree_->Branch("sd.primary_electron_total_energy", &_root_variables_.total_energy);
 
+    
+    _number_of_electrons_ = 0;
+    _number_of_foil_electrons_ = 0;
+    _number_of_wall_electrons_ = 0;
+    _number_of_negative_charge_electrons_ = 0;
     
     this->_set_initialized(true);
     
@@ -108,6 +118,76 @@ dpp::base_module::process_status SimulAna::process(datatools::things & record_)
         }
 
     }
+    
+
+    
+    
+    if (! record_.has("PTD")) {
+        return PROCESS_CONTINUE;
+    }
+    const snemo::datamodel::particle_track_data & my_ptd = record_.get<snemo::datamodel::particle_track_data>("PTD");
+        
+    if (! my_ptd.has_particles()) {
+        return PROCESS_CONTINUE;
+    }
+        
+    //////////  LOOP OVER PARTICLES  //////////
+    const snemo::datamodel::particle_track_data::particle_collection_type & my_particles = my_ptd.get_particles();
+        
+    for (const auto & ip : my_particles) {
+        const snemo::datamodel::particle_track & my_pt = ip.get();
+        
+        is_helix = false;
+        does_touch_foil = false;
+        does_touch_wall = false;
+        has_negtive_charge = false;
+        
+        if(my_pt.get_charge()==snemo::datamodel::particle_track::charge_type::NEGATIVE)
+            has_negtive_charge = true;
+        
+        //////////  STUDY TRAJECTORY  //////////
+        snemo::datamodel::tracker_trajectory my_trajectory = my_pt.get_trajectory();
+        
+        if(my_trajectory.get_pattern().get_pattern_id() == "helix")
+            is_helix = true;
+        /// end of study trajectory ///
+            
+        //////////  LOOP OVER VERTICES  //////////
+        const snemo::datamodel::particle_track::vertex_collection_type & my_vertices = my_pt.get_vertices();
+                
+        for (const auto & iv : my_vertices) {
+                
+            if(snemo::datamodel::particle_track::vertex_is (iv.get(), snemo::datamodel::particle_track::vertex_type::VERTEX_ON_SOURCE_FOIL))
+                does_touch_foil = true;
+                    
+            if(snemo::datamodel::particle_track::vertex_is (iv.get(), snemo::datamodel::particle_track::vertex_type::VERTEX_ON_MAIN_CALORIMETER))
+                does_touch_wall = true;
+        
+        } /// end loop over vertices ///
+
+        /*
+        if (snemo::datamodel::particle_track::particle_has_negative_charge(my_pt)) {
+                _root_variables_.electric_charge = "negative";
+        }
+            
+        if (snemo::datamodel::particle_track::particle_has_negative_charge(my_pt)) {
+            if (get_logging_priority() == datatools::logger::PRIO_TRACE) {
+                DT_LOG_TRACE(get_logging_priority(), "Particle has negative charge");
+                my_pt.tree_dump();
+            }
+        }*/
+        
+        if(is_helix) { _number_of_electrons_++;
+            if(does_touch_foil) {_number_of_foil_electrons_++;
+                if(does_touch_wall) { _number_of_wall_electrons_++;
+                    if(has_negtive_charge) _number_of_negative_charge_electrons_++;
+                }
+            }
+        }
+        
+    } /// end loop over particles ///
+    
+
 
     
     return PROCESS_OK;
@@ -125,6 +205,11 @@ void SimulAna::reset() {
         _root_tree_ = 0;
         _root_file_ = 0;
     }
+    
+    std::cout << "Number of electrons: " << _number_of_electrons_ << std::endl;
+    std::cout << "Number of electrons touching the foil: " << _number_of_foil_electrons_ << std::endl;
+    std::cout << "Number of electrons touching the wall: " << _number_of_wall_electrons_ << std::endl;
+    std::cout << "Number of electrons with negatie charge: " << _number_of_negative_charge_electrons_ << std::endl;
     
     this->_set_initialized(false);
 }
