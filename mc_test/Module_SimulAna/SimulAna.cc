@@ -295,38 +295,38 @@ void SimulAna::reset() {
 void SimulAna::print_results() {
 
    std::cout << "Number of electrons: " << _number_of_electrons_ <<
-     " (" << (double)_number_of_electrons_/(double)_number_of_simulated_electrons_<<
-      " +/- " << pow((double)_number_of_electrons_,0.5)/(double)_number_of_simulated_electrons_<<
-      " of total simulated electrons" << std::endl;
+     " - (" << 100*(double)_number_of_electrons_/(double)_number_of_simulated_electrons_<<
+      " +/- " << 100*pow((double)_number_of_electrons_,0.5)/(double)_number_of_simulated_electrons_<<
+      ")% of total simulated electrons" << std::endl;
     std::cout << "Number of electrons touching the foil: " << _number_of_foil_electrons_ <<
-      " (" << (double)_number_of_foil_electrons_/(double)_number_of_simulated_electrons_<<
-      " +/- " << pow((double)_number_of_foil_electrons_,0.5)/(double)_number_of_simulated_electrons_<<
-      " of total simulated electrons" << std::endl;
+      " - (" << 100*(double)_number_of_foil_electrons_/(double)_number_of_simulated_electrons_<<
+      " +/- " << 100*pow((double)_number_of_foil_electrons_,0.5)/(double)_number_of_simulated_electrons_<<
+      ")% of total simulated electrons" << std::endl;
     std::cout << "Number of electrons touching the wall: " << _number_of_wall_electrons_ <<
-      " (" << (double)_number_of_wall_electrons_/(double)_number_of_simulated_electrons_<<
-      " +/- " << pow((double)_number_of_wall_electrons_,0.5)/(double)_number_of_simulated_electrons_<<
-      " of total simulated electrons" << std::endl;
+      " - (" << 100*(double)_number_of_wall_electrons_/(double)_number_of_simulated_electrons_<<
+      " +/- " << 100*pow((double)_number_of_wall_electrons_,0.5)/(double)_number_of_simulated_electrons_<<
+      ")% of total simulated electrons" << std::endl;
     std::cout << "Number of electrons with negatie charge: " << _number_of_negative_charge_electrons_ <<
-      " (" << (double)_number_of_negative_charge_electrons_/(double)_number_of_simulated_electrons_<<
-      " +/- " << pow((double)_number_of_negative_charge_electrons_,0.5)/(double)_number_of_simulated_electrons_<<
-      " of total simulated electrons" << std::endl;
+      " - (" << 100*(double)_number_of_negative_charge_electrons_/(double)_number_of_simulated_electrons_<<
+      " +/- " << 100*pow((double)_number_of_negative_charge_electrons_,0.5)/(double)_number_of_simulated_electrons_<<
+      ")% of total simulated electrons" << std::endl;
 
    std::cout << "Number of alphas: " << _number_of_alphas_ <<
-      " (" << (double)_number_of_alphas_/(double)_number_of_simulated_alphas_<<
-      " +/- " << pow((double)_number_of_alphas_,0.5)/(double)_number_of_simulated_alphas_<<
-      " of total simulated alphas" << std::endl;
+      " - (" << 100*(double)_number_of_alphas_/(double)_number_of_simulated_alphas_<<
+      " +/- " << 100*pow((double)_number_of_alphas_,0.5)/(double)_number_of_simulated_alphas_<<
+      ")% of total simulated alphas" << std::endl;
     std::cout << "Number of alphas that are delayed: " << _number_of_delayed_alphas_<<
-      " (" << (double)_number_of_delayed_alphas_/(double)_number_of_simulated_alphas_<<
-      " +/- " << pow((double)_number_of_delayed_alphas_,0.5)/(double)_number_of_simulated_alphas_<<
-      " of total simulated alphas" << std::endl;
+      " - (" << 100*(double)_number_of_delayed_alphas_/(double)_number_of_simulated_alphas_<<
+      " +/- " << 100*pow((double)_number_of_delayed_alphas_,0.5)/(double)_number_of_simulated_alphas_<<
+      ")% of total simulated alphas" << std::endl;
     std::cout << "Number of alphas touching the foil: " << _number_of_foil_alphas_ <<
-      " (" << (double)_number_of_foil_alphas_/(double)_number_of_simulated_alphas_<<
-      " +/- " << pow((double)_number_of_foil_alphas_,0.5)/(double)_number_of_simulated_alphas_<<
-      " of total simulated alphas" << std::endl;
+      " - (" << 100*(double)_number_of_foil_alphas_/(double)_number_of_simulated_alphas_<<
+      " +/- " << 100*pow((double)_number_of_foil_alphas_,0.5)/(double)_number_of_simulated_alphas_<<
+      ")% of total simulated alphas" << std::endl;
     std::cout << "Number of alphas not touching the wall: " << _number_of_nowall_alphas_ <<
-      " (" << (double)_number_of_nowall_alphas_/(double)_number_of_simulated_alphas_<<
-      " +/- " << pow((double)_number_of_nowall_alphas_,0.5)/(double)_number_of_simulated_alphas_<<
-      " of total simulated alphas" << std::endl;
+      " - (" << 100*(double)_number_of_nowall_alphas_/(double)_number_of_simulated_alphas_<<
+      " +/- " << 100*pow((double)_number_of_nowall_alphas_,0.5)/(double)_number_of_simulated_alphas_<<
+      ")% of total simulated alphas" << std::endl;
 
 }
 
