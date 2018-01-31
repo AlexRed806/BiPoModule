@@ -2,7 +2,7 @@
 #@meta_label "type"
 
 [name="flsimulate" type="flsimulate::section"]
-numberOfEvents : integer = 1
+numberOfEvents : integer = 10000
 
 [name="flsimulate.variantService" type="flsimulate::section"]
 settings : string[4] = "primary_events:generator=Bi214_Po214" \

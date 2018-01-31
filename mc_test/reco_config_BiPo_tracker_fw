@@ -6,7 +6,7 @@
 # #@description Reconstruction version (automatic: extracted from input metadata)
 # experimentalSetupUrn : string = "urn:snemo:demonstrator:setup:1.0"
 #@description Number of events to reconstruct (default: 0 = no limit)
-numberOfEvents : integer = 100000
+numberOfEvents : integer = 10000
 
 
 [name="flreconstruct.plugins" type="flreconstruct::section"]
@@ -51,7 +51,7 @@ hilix.only_guess	: string[8] = "BBB" "BBT" "BTT" "TBB" "TBT" "TTB" "BTB" "TTT"
 logging.priority : string = "warning"
 
  #@description ROOT filename
- filename : string as path = "test.root"
+ filename : string as path = "BiPo_tracker_fw_10000ev.root"
 
 [name="Dump" type="dpp::dump_module"]
 
