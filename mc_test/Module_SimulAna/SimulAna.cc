@@ -52,31 +52,30 @@ void SimulAna::initialize(const datatools::properties & setup_,
     
     _root_tree_simulated_electrons_ = new TTree("tree_se", "tree_se");
     _root_tree_simulated_electrons_->SetDirectory(_root_file_);
-    _root_tree_simulated_electrons_->Branch("sd.primary_electron_kinetic_energy", &_root_variables_simulated_electrons_.kinetic_energy);
-    _root_tree_simulated_electrons_->Branch("sd.primary_electron_total_energy", &_root_variables_simulated_electrons_.total_energy);
+    _root_tree_simulated_electrons_->Branch("sd.primary_electrons_kinetic_energy", &_root_variables_simulated_particles_.kinetic_energy);
+    _root_tree_simulated_electrons_->Branch("sd.primary_electrons_total_energy", &_root_variables_simulated_particles_.total_energy);
 
     _root_tree_reconstructed_electrons_ = new TTree("tree_re", "tree_re");
     _root_tree_reconstructed_electrons_->SetDirectory(_root_file_);
-    _root_tree_reconstructed_electrons_->Branch("sd.primary_electron_kinetic_energy", &_root_variables_simulated_electrons_.kinetic_energy);
-    _root_tree_reconstructed_electrons_->Branch("ptd.reconstructed_electron_n_geiger_hits", &_root_variables_reconstructed_electrons_.n_geiger_hits);
-    _root_tree_reconstructed_electrons_->Branch("ptd.reconstructed_electron_track_length", &_root_variables_reconstructed_electrons_.track_length);
+    _root_tree_reconstructed_electrons_->Branch("sd.reconstructed_electrons_kinetic_energy", &_root_variables_simulated_particles_.kinetic_energy);
+    _root_tree_reconstructed_electrons_->Branch("ptd.reconstructed_electrons_n_geiger_hits", &_root_variables_reconstructed_particles_.n_geiger_hits);
+    _root_tree_reconstructed_electrons_->Branch("ptd.reconstructed_electrons_track_length", &_root_variables_reconstructed_particles_.track_length);
 
-
-    /*
-    _root_histograms_.n_geiger_hits_electrons
-      = new TH1I("n_geiger_hits_electrons","n_geiger_hits_electrons",100,0,50);
-    _root_histograms_.track_length_electrons
-      = new TH1F("track_length_electrons","track_length_electrons",100,0,3000);
-    _root_histograms_.energy_deposit_electrons
-      = new TH1F("energy_deposit_electrons","energy_deposit_electrons",100,0,4);
-    */
+    _root_tree_reconstructed_alphas_ = new TTree("tree_ra", "tree_ra");
+    _root_tree_reconstructed_alphas_->SetDirectory(_root_file_);
+    //_root_tree_reconstructed_alphas_->Branch("sd.reconstructed_alphas_kinetic_energy", &_root_variables_simulated_particles_.kinetic_energy);
+    _root_tree_reconstructed_alphas_->Branch("ptd.reconstructed_alphas_n_geiger_hits", &_root_variables_reconstructed_particles_.n_geiger_hits);
+    _root_tree_reconstructed_alphas_->Branch("ptd.reconstructed_alphas_track_length", &_root_variables_reconstructed_particles_.track_length);
 
     // Counters    
     _number_of_simulated_electrons_ = 0;
     _number_of_simulated_alphas_ = 0;
     _number_of_simulated_gammas_ = 0;
 
+    _number_of_simulated_1e1a_ = 0;
+
     _number_of_electrons_ = 0;
+    _number_of_helix_electrons_ = 0;
     _number_of_foil_electrons_ = 0;
     _number_of_wall_electrons_ = 0;
     _number_of_negative_charge_electrons_ = 0;
@@ -136,9 +135,9 @@ dpp::base_module::process_status SimulAna::process(datatools::things & record_)
 		//std::cout << "Electron Ek: " << my_primary_particle[i_particle].get_kinetic_energy() <<      " MeV" << std::endl;
 	      }
               
-	      _root_variables_simulated_electrons_.kinetic_energy = my_primary_particle[i_particle].get_kinetic_energy();
-	      _root_variables_reconstructed_electrons_.kinetic_energy = my_primary_particle[i_particle].get_kinetic_energy();
-	      _root_variables_simulated_electrons_.total_energy = my_primary_particle[i_particle].get_total_energy();
+	      _root_variables_simulated_particles_.kinetic_energy = my_primary_particle[i_particle].get_kinetic_energy();
+	      _root_variables_reconstructed_particles_.kinetic_energy = my_primary_particle[i_particle].get_kinetic_energy();
+	      _root_variables_simulated_particles_.total_energy = my_primary_particle[i_particle].get_total_energy();
 	      _root_tree_simulated_electrons_->Fill();
               
             }
@@ -173,6 +172,7 @@ dpp::base_module::process_status SimulAna::process(datatools::things & record_)
     if (_number_of_event_electrons_ != 1 || _number_of_event_alphas_ != 1) {
       return PROCESS_CONTINUE;
     }
+    _number_of_simulated_1e1a_ ++;
         
     //////////  LOOP OVER PARTICLES  //////////
     const snemo::datamodel::particle_track_data::particle_collection_type & my_particles = my_ptd.get_particles();
@@ -199,11 +199,11 @@ dpp::base_module::process_status SimulAna::process(datatools::things & record_)
 	else if(my_tj.get_pattern().get_pattern_id() == "line")
 	  is_straight = true;
 	
-	_root_variables_reconstructed_electrons_.track_length = my_tj.get_pattern().get_shape().get_length();
+	_root_variables_reconstructed_particles_.track_length = my_tj.get_pattern().get_shape().get_length();
 
 	if(my_tj.has_cluster()) {
 	  snemo::datamodel::tracker_cluster my_cl = my_tj.get_cluster();
-	  _root_variables_reconstructed_electrons_.n_geiger_hits = my_cl.get_number_of_hits();
+	  _root_variables_reconstructed_particles_.n_geiger_hits = my_cl.get_number_of_hits();
 	  if(my_cl.is_delayed()) is_delayed = true;
 	  else is_prompt = true;
 	}
@@ -241,14 +241,7 @@ dpp::base_module::process_status SimulAna::process(datatools::things & record_)
 
 		    _number_of_negative_charge_electrons_++;
 
-		    //_root_variables_reconstructed_electrons_.n_geiger_hits = my_primary_particle[i_particle].get_total_energy();
-		    //_root_variables_reconstructed_electrons_.track_length = my_primary_particle[i_particle].get_total_energy();
-		    //_root_variables_reconstructed_electrons_.kinetic_energy = my_primary_particle[i_particle].get_kinetic_energy();
 		    _root_tree_reconstructed_electrons_->Fill();
-
-		    //_root_histograms_.n_geiger_hits_electrons->Fill(1)
-		    //_root_histograms_.track_length_electrons->Fill(1)
-		    //_root_histograms_.energy_depsit_electrons->Fill(1)
 		  }
 		}
             }
@@ -256,7 +249,11 @@ dpp::base_module::process_status SimulAna::process(datatools::things & record_)
         if(is_delayed) { _number_of_alphas_++;
 	  if(is_delayed) {_number_of_delayed_alphas_++;
             if(does_touch_foil) {_number_of_foil_alphas_++;
-	      if(!does_touch_wall) { _number_of_nowall_alphas_++;
+	      if(!does_touch_wall) { 
+
+		_number_of_nowall_alphas_++;
+
+		_root_tree_reconstructed_alphas_->Fill();
 	      }
             }
 	  }
@@ -295,37 +292,37 @@ void SimulAna::reset() {
 void SimulAna::print_results() {
 
    std::cout << "Number of electrons: " << _number_of_electrons_ <<
-     " - (" << 100*(double)_number_of_electrons_/(double)_number_of_simulated_electrons_<<
-      " +/- " << 100*pow((double)_number_of_electrons_,0.5)/(double)_number_of_simulated_electrons_<<
+     " - (" << 100*(double)_number_of_electrons_/(double)_number_of_simulated_1e1a_<<
+      " +/- " << 100*pow((double)_number_of_electrons_,0.5)/(double)_number_of_simulated_1e1a_<<
       ")% of total simulated electrons" << std::endl;
     std::cout << "Number of electrons touching the foil: " << _number_of_foil_electrons_ <<
-      " - (" << 100*(double)_number_of_foil_electrons_/(double)_number_of_simulated_electrons_<<
-      " +/- " << 100*pow((double)_number_of_foil_electrons_,0.5)/(double)_number_of_simulated_electrons_<<
+      " - (" << 100*(double)_number_of_foil_electrons_/(double)_number_of_simulated_1e1a_<<
+      " +/- " << 100*pow((double)_number_of_foil_electrons_,0.5)/(double)_number_of_simulated_1e1a_<<
       ")% of total simulated electrons" << std::endl;
     std::cout << "Number of electrons touching the wall: " << _number_of_wall_electrons_ <<
-      " - (" << 100*(double)_number_of_wall_electrons_/(double)_number_of_simulated_electrons_<<
-      " +/- " << 100*pow((double)_number_of_wall_electrons_,0.5)/(double)_number_of_simulated_electrons_<<
+      " - (" << 100*(double)_number_of_wall_electrons_/(double)_number_of_simulated_1e1a_<<
+      " +/- " << 100*pow((double)_number_of_wall_electrons_,0.5)/(double)_number_of_simulated_1e1a_<<
       ")% of total simulated electrons" << std::endl;
     std::cout << "Number of electrons with negatie charge: " << _number_of_negative_charge_electrons_ <<
-      " - (" << 100*(double)_number_of_negative_charge_electrons_/(double)_number_of_simulated_electrons_<<
-      " +/- " << 100*pow((double)_number_of_negative_charge_electrons_,0.5)/(double)_number_of_simulated_electrons_<<
+      " - (" << 100*(double)_number_of_negative_charge_electrons_/(double)_number_of_simulated_1e1a_<<
+      " +/- " << 100*pow((double)_number_of_negative_charge_electrons_,0.5)/(double)_number_of_simulated_1e1a_<<
       ")% of total simulated electrons" << std::endl;
 
    std::cout << "Number of alphas: " << _number_of_alphas_ <<
-      " - (" << 100*(double)_number_of_alphas_/(double)_number_of_simulated_alphas_<<
-      " +/- " << 100*pow((double)_number_of_alphas_,0.5)/(double)_number_of_simulated_alphas_<<
+      " - (" << 100*(double)_number_of_alphas_/(double)_number_of_simulated_1e1a_<<
+      " +/- " << 100*pow((double)_number_of_alphas_,0.5)/(double)_number_of_simulated_1e1a_<<
       ")% of total simulated alphas" << std::endl;
     std::cout << "Number of alphas that are delayed: " << _number_of_delayed_alphas_<<
-      " - (" << 100*(double)_number_of_delayed_alphas_/(double)_number_of_simulated_alphas_<<
-      " +/- " << 100*pow((double)_number_of_delayed_alphas_,0.5)/(double)_number_of_simulated_alphas_<<
+      " - (" << 100*(double)_number_of_delayed_alphas_/(double)_number_of_simulated_1e1a_<<
+      " +/- " << 100*pow((double)_number_of_delayed_alphas_,0.5)/(double)_number_of_simulated_1e1a_<<
       ")% of total simulated alphas" << std::endl;
     std::cout << "Number of alphas touching the foil: " << _number_of_foil_alphas_ <<
-      " - (" << 100*(double)_number_of_foil_alphas_/(double)_number_of_simulated_alphas_<<
-      " +/- " << 100*pow((double)_number_of_foil_alphas_,0.5)/(double)_number_of_simulated_alphas_<<
+      " - (" << 100*(double)_number_of_foil_alphas_/(double)_number_of_simulated_1e1a_<<
+      " +/- " << 100*pow((double)_number_of_foil_alphas_,0.5)/(double)_number_of_simulated_1e1a_<<
       ")% of total simulated alphas" << std::endl;
     std::cout << "Number of alphas not touching the wall: " << _number_of_nowall_alphas_ <<
-      " - (" << 100*(double)_number_of_nowall_alphas_/(double)_number_of_simulated_alphas_<<
-      " +/- " << 100*pow((double)_number_of_nowall_alphas_,0.5)/(double)_number_of_simulated_alphas_<<
+      " - (" << 100*(double)_number_of_nowall_alphas_/(double)_number_of_simulated_1e1a_<<
+      " +/- " << 100*pow((double)_number_of_nowall_alphas_,0.5)/(double)_number_of_simulated_1e1a_<<
       ")% of total simulated alphas" << std::endl;
 
 }

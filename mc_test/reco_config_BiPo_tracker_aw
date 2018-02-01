@@ -6,7 +6,7 @@
 # #@description Reconstruction version (automatic: extracted from input metadata)
 # experimentalSetupUrn : string = "urn:snemo:demonstrator:setup:1.0"
 #@description Number of events to reconstruct (default: 0 = no limit)
-numberOfEvents : integer = 10000
+numberOfEvents : integer = 100000
 
 
 [name="flreconstruct.plugins" type="flreconstruct::section"]
@@ -42,16 +42,21 @@ CAT.level : string = "mute"
 [name="TrackFitting" type="snemo::reconstruction::trackfit_tracker_fitting_module"]
 fitting_models		: string[2] = "helix" "line"
 line.only_guess		: string[4] = "BB" "TB" "BT" "TT"
-hilix.only_guess	: string[8] = "BBB" "BBT" "BTT" "TBB" "TBT" "TTB" "BTB" "TTT"
+helix.only_guess	: string[8] = "BBB" "BBT" "BTT" "TBB" "TBT" "TTB" "BTB" "TTT"
 
 
 [name="ChargedParticleTracker" type="snemo::reconstruction::charged_particle_tracking_module"]
+drivers : string[4] = "VED" "CCD" "CAD" "AFD"
+AFD.minimal_delayed_time                : real as time = 10 us
+AFD.minimal_cluster_xy_search_distance  : real as length = 40 cm
+AFD.minimal_cluster_z_search_distance   : real as length = 30 cm
+
 
 [name="SimulAna" type="SimulAna"]
 logging.priority : string = "warning"
 
  #@description ROOT filename
- filename : string as path = "BiPo_tracker_aw_10000ev.root"
+ filename : string as path = "BiPo_tracker_aw_100000ev.root"
 
 [name="Dump" type="dpp::dump_module"]
 

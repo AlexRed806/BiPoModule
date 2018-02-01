@@ -6,7 +6,7 @@
 # #@description Reconstruction version (automatic: extracted from input metadata)
 # experimentalSetupUrn : string = "urn:snemo:demonstrator:setup:1.0"
 #@description Number of events to reconstruct (default: 0 = no limit)
-numberOfEvents : integer = 1000
+numberOfEvents : integer = 100000
 
 
 [name="flreconstruct.plugins" type="flreconstruct::section"]
@@ -14,16 +14,16 @@ plugins : string[5] = "Falaise_CAT" \
 	  	      "TrackFit" \
 		      "Falaise_TrackFit" \
 		      "Falaise_ChargedParticleTracking" \
-              "SimulAna" \
+              	      "SimulAna" \
 
 
 [name="pipeline" type="dpp::chain_module"]
-modules : string[7] = "CalibrateTracker" \
+modules : string[6] = "CalibrateTracker" \
 	  	      "CalibrateCalorimeters" \
 		      "CATTrackerClusterizer" \
 		      "TrackFitting" \
 		      "ChargedParticleTracker" \
-              "SimulAna" \
+              	      "SimulAna" \
 		      "Dump"
 
 [name="CalibrateTracker" type="snemo::processing::mock_tracker_s2c_module"]
@@ -39,7 +39,6 @@ TPC.processing_delayed_hits   : boolean = true
 #@description CAT logging level
 CAT.level : string = "mute"
 
-
 [name="TrackFitting" type="snemo::reconstruction::trackfit_tracker_fitting_module"]
 fitting_models		: string[2] = "helix" "line"
 line.only_guess		: string[4] = "BB" "TB" "BT" "TT"
@@ -52,15 +51,12 @@ AFD.minimal_delayed_time                : real as time = 10 us
 AFD.minimal_cluster_xy_search_distance  : real as length = 40 cm
 AFD.minimal_cluster_z_search_distance   : real as length = 30 cm
 
-# [name="AlphaFinder" type="AlphaFinder"]
-# type="snemo::reconstruction::alpha_finder_driver"]
-# logging.priority : string = "warning"
 
 [name="SimulAna" type="SimulAna"]
 logging.priority : string = "warning"
 
  #@description ROOT filename
- filename : string as path = "test.root"
+ filename : string as path = "BiPo_source_surface_100000ev.root"
 
 [name="Dump" type="dpp::dump_module"]
 

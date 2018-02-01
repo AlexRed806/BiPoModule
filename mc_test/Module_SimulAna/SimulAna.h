@@ -26,13 +26,6 @@ struct root_variables {
   int n_geiger_hits;
   double track_length;
 };
-/*
-struct root_histograms {
-  TH1I * n_geiger_hits_electrons;
-  TH1F * track_length_electrons;
-  TH1F * energy_depsit_electrons;
-};
-*/
 
 class SimulAna : public dpp::base_module {
     
@@ -53,9 +46,9 @@ public:
 private:
 
     TFile * _root_file_;
-    TTree * _root_tree_simulated_electrons_, * _root_tree_reconstructed_electrons_;
+    TTree * _root_tree_simulated_electrons_, * _root_tree_reconstructed_electrons_ , * _root_tree_reconstructed_alphas_;
     
-    root_variables _root_variables_simulated_electrons_, _root_variables_reconstructed_electrons_;
+    root_variables _root_variables_simulated_particles_, _root_variables_reconstructed_particles_;
     //root_histograms _root_histograms_;
     
     bool is_helix;
@@ -69,12 +62,14 @@ private:
     unsigned int _number_of_simulated_electrons_;
     unsigned int _number_of_simulated_alphas_;
     unsigned int _number_of_simulated_gammas_;
+    unsigned int _number_of_simulated_1e1a_;
 
     unsigned int _number_of_event_electrons_;
     unsigned int _number_of_event_alphas_;
     unsigned int _number_of_event_gammas_;
 
     unsigned int _number_of_electrons_;
+    unsigned int _number_of_helix_electrons_;
     unsigned int _number_of_foil_electrons_;
     unsigned int _number_of_wall_electrons_;
     unsigned int _number_of_negative_charge_electrons_;
