@@ -2,4 +2,5 @@
 
 make -j4
 
-cp -r libSimulAna.* $FALAISE_PATH/lib64/Falaise/modules/
+cp -r libSimulAna.* $FALAISE_MODULE_LIBS/
+
