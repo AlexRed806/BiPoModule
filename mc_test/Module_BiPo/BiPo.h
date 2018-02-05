@@ -46,8 +46,12 @@ public:
 private:
 
     TFile * _root_file_;
-    TTree * _root_tree_simulated_electrons_, * _root_tree_reconstructed_electrons_ , * _root_tree_reconstructed_alphas_;
-    
+    TTree * _root_tree_simulated_electrons_;
+    TTree * _root_tree_reconstructed_electrons_source_sel_;
+    TTree * _root_tree_reconstructed_electrons_tracker_sel_;
+    TTree * _root_tree_reconstructed_alphas_source_sel_;
+    TTree * _root_tree_reconstructed_alphas_tracker_sel_;
+
     root_variables _root_variables_simulated_particles_, _root_variables_reconstructed_particles_;
     //root_histograms _root_histograms_;
     
@@ -71,15 +75,18 @@ private:
     unsigned int _number_of_event_gammas_;
 
     unsigned int _number_of_electrons_;
+    unsigned int _number_of_prompt_electrons_;
     unsigned int _number_of_helix_electrons_;
     unsigned int _number_of_foil_electrons_;
     unsigned int _number_of_wall_electrons_;
+    unsigned int _number_of_anywall_electrons_;
     unsigned int _number_of_negative_charge_electrons_;
 
     unsigned int _number_of_alphas_;
     unsigned int _number_of_delayed_alphas_;
     unsigned int _number_of_foil_alphas_;
     unsigned int _number_of_nowall_alphas_;
+    unsigned int _number_of_nofoil_alphas_;
 
     unsigned int n_wierdos;
 

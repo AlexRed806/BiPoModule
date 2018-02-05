@@ -51,17 +51,27 @@ void BiPo::initialize(const datatools::properties & setup_,
     _root_tree_simulated_electrons_->Branch("sd.primary_electrons_kinetic_energy", &_root_variables_simulated_particles_.kinetic_energy);
     _root_tree_simulated_electrons_->Branch("sd.primary_electrons_total_energy", &_root_variables_simulated_particles_.total_energy);
 
-    _root_tree_reconstructed_electrons_ = new TTree("tree_re", "tree_re");
-    _root_tree_reconstructed_electrons_->SetDirectory(_root_file_);
-    _root_tree_reconstructed_electrons_->Branch("sd.reconstructed_electrons_kinetic_energy", &_root_variables_simulated_particles_.kinetic_energy);
-    _root_tree_reconstructed_electrons_->Branch("ptd.reconstructed_electrons_n_geiger_hits", &_root_variables_reconstructed_particles_.n_geiger_hits);
-    _root_tree_reconstructed_electrons_->Branch("ptd.reconstructed_electrons_track_length", &_root_variables_reconstructed_particles_.track_length);
+    _root_tree_reconstructed_electrons_source_sel_ = new TTree("tree_rec_elec_source", "tree_rec_elec_source");
+    _root_tree_reconstructed_electrons_source_sel_->SetDirectory(_root_file_);
+    _root_tree_reconstructed_electrons_source_sel_->Branch("sd.reconstructed_electrons_kinetic_energy", &_root_variables_simulated_particles_.kinetic_energy);
+    _root_tree_reconstructed_electrons_source_sel_->Branch("ptd.reconstructed_electrons_n_geiger_hits", &_root_variables_reconstructed_particles_.n_geiger_hits);
+    _root_tree_reconstructed_electrons_source_sel_->Branch("ptd.reconstructed_electrons_track_length", &_root_variables_reconstructed_particles_.track_length);
+    
+    _root_tree_reconstructed_electrons_tracker_sel_ = new TTree("tree_rec_elec_tracker", "tree_rec_elec_tracker");
+    _root_tree_reconstructed_electrons_tracker_sel_->SetDirectory(_root_file_);
+    _root_tree_reconstructed_electrons_tracker_sel_->Branch("sd.reconstructed_electrons_kinetic_energy", &_root_variables_simulated_particles_.kinetic_energy);
+    _root_tree_reconstructed_electrons_tracker_sel_->Branch("ptd.reconstructed_electrons_n_geiger_hits", &_root_variables_reconstructed_particles_.n_geiger_hits);
+    _root_tree_reconstructed_electrons_tracker_sel_->Branch("ptd.reconstructed_electrons_track_length", &_root_variables_reconstructed_particles_.track_length);
 
-    _root_tree_reconstructed_alphas_ = new TTree("tree_ra", "tree_ra");
-    _root_tree_reconstructed_alphas_->SetDirectory(_root_file_);
-    //_root_tree_reconstructed_alphas_->Branch("sd.reconstructed_alphas_kinetic_energy", &_root_variables_simulated_particles_.kinetic_energy);
-    _root_tree_reconstructed_alphas_->Branch("ptd.reconstructed_alphas_n_geiger_hits", &_root_variables_reconstructed_particles_.n_geiger_hits);
-    _root_tree_reconstructed_alphas_->Branch("ptd.reconstructed_alphas_track_length", &_root_variables_reconstructed_particles_.track_length);
+    _root_tree_reconstructed_alphas_source_sel_ = new TTree("tree_alpha_source", "tree_alpha_source");
+    _root_tree_reconstructed_alphas_source_sel_->SetDirectory(_root_file_);
+    _root_tree_reconstructed_alphas_source_sel_->Branch("ptd.reconstructed_alphas_n_geiger_hits", &_root_variables_reconstructed_particles_.n_geiger_hits);
+    _root_tree_reconstructed_alphas_source_sel_->Branch("ptd.reconstructed_alphas_track_length", &_root_variables_reconstructed_particles_.track_length);
+    
+    _root_tree_reconstructed_alphas_tracker_sel_ = new TTree("tree_alpha_tracker", "tree_alpha_tracker");
+    _root_tree_reconstructed_alphas_tracker_sel_->SetDirectory(_root_file_);
+    _root_tree_reconstructed_alphas_tracker_sel_->Branch("ptd.reconstructed_alphas_n_geiger_hits", &_root_variables_reconstructed_particles_.n_geiger_hits);
+    _root_tree_reconstructed_alphas_tracker_sel_->Branch("ptd.reconstructed_alphas_track_length", &_root_variables_reconstructed_particles_.track_length);
 
     // Counters    
     _number_of_simulated_electrons_ = 0;
@@ -71,15 +81,18 @@ void BiPo::initialize(const datatools::properties & setup_,
     _number_of_simulated_1e1a_ = 0;
 
     _number_of_electrons_ = 0;
+    _number_of_prompt_electrons_ = 0;
     _number_of_helix_electrons_ = 0;
     _number_of_foil_electrons_ = 0;
     _number_of_wall_electrons_ = 0;
+    _number_of_anywall_electrons_ = 0;
     _number_of_negative_charge_electrons_ = 0;
 
     _number_of_alphas_ = 0;
     _number_of_delayed_alphas_ = 0;
     _number_of_foil_alphas_ = 0;
     _number_of_nowall_alphas_ = 0;
+    _number_of_nofoil_alphas_ = 0;
     
     n_wierdos = 0;
 
@@ -231,11 +244,11 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
         
         //////////  CUT FLOW: SOURCE SEL  //////////
         if(is_helix) { _number_of_electrons_++;
-            if(does_touch_foil) {_number_of_foil_electrons_++;
+            if(does_touch_foil) { _number_of_foil_electrons_++;
                 if(does_touch_wall) { _number_of_wall_electrons_++;
                     if(has_negative_charge) {
                         _number_of_negative_charge_electrons_++;
-                        _root_tree_reconstructed_electrons_->Fill();
+                        _root_tree_reconstructed_electrons_source_sel_->Fill();
                     }
                 }
             }
@@ -245,28 +258,23 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
                 if(does_touch_foil) {_number_of_foil_alphas_++;
                     if(!does_touch_wall) {
                         _number_of_nowall_alphas_++;
-                        _root_tree_reconstructed_alphas_->Fill();
+                        _root_tree_reconstructed_alphas_source_sel_->Fill();
                     }
                 }
             }
         }
         //////////  CUT FLOW: TRACKER SEL  //////////
-        if(is_helix) {
-            if(is_prompt) {
-                if(does_touch_wall) { //check that is ANY wall
-                    //if(has_negative_charge) {
-                        //_number_of_negative_charge_electrons_++;
-                        //_root_tree_reconstructed_electrons_->Fill();
-                    //}
-                }
+        if(is_prompt) { _number_of_prompt_electrons_++;
+            if(does_touch_wall) { _number_of_anywall_electrons_++; //check that is ANY wall
+                _root_tree_reconstructed_electrons_tracker_sel_->Fill();
             }
         }
         if(is_delayed) {
             if(is_delayed) {
                 if(!does_touch_wall) {
                     if(!does_touch_foil) {
-                        //_number_of_nowall_alphas_++;
-                        //_root_tree_reconstructed_alphas_->Fill();
+                        _number_of_nofoil_alphas_++;
+                        _root_tree_reconstructed_alphas_tracker_sel_->Fill();
                     }
                 }
             }
@@ -286,12 +294,18 @@ void BiPo::reset() {
         // write the output, finished streaming
         _root_file_->cd();
         _root_tree_simulated_electrons_->Write();
-        _root_tree_reconstructed_electrons_->Write();
+        _root_tree_reconstructed_electrons_source_sel_->Write();
+        _root_tree_reconstructed_electrons_tracker_sel_->Write();
+        _root_tree_reconstructed_alphas_source_sel_->Write();
+        _root_tree_reconstructed_alphas_tracker_sel_->Write();
         _root_file_->Close();
         // clean up
         delete _root_file_;
-	_root_tree_simulated_electrons_ = 0;
-	_root_tree_reconstructed_electrons_ = 0;
+        _root_tree_simulated_electrons_ = 0;
+        _root_tree_reconstructed_electrons_source_sel_ = 0;
+        _root_tree_reconstructed_electrons_tracker_sel_ = 0;
+        _root_tree_reconstructed_alphas_source_sel_ = 0;
+        _root_tree_reconstructed_alphas_tracker_sel_ = 0;
         _root_file_ = 0;
     }
     
@@ -303,6 +317,8 @@ void BiPo::reset() {
 
 void BiPo::print_results() {
 
+    std::cout << "------  RESULTS OF THE CUT FLOW FOR SOURCE SELECTION  ------" << std::endl;
+    
    std::cout << "Number of electrons: " << _number_of_electrons_ <<
      " - (" << 100*(double)_number_of_electrons_/(double)_number_of_simulated_1e1a_<<
       " +/- " << 100*pow((double)_number_of_electrons_,0.5)/(double)_number_of_simulated_1e1a_<<
@@ -336,6 +352,26 @@ void BiPo::print_results() {
       " - (" << 100*(double)_number_of_nowall_alphas_/(double)_number_of_simulated_1e1a_<<
       " +/- " << 100*pow((double)_number_of_nowall_alphas_,0.5)/(double)_number_of_simulated_1e1a_<<
       ")% of total simulated alphas" << std::endl;
+    
+    std::cout << "------  RESULTS OF THE CUT FLOW FOR TRACKER SELECTION  ------" << std::endl;
+
+    std::cout << "Number of electrons that are delayed: " << _number_of_prompt_electrons_ <<
+    " - (" << 100*(double)_number_of_prompt_electrons_/(double)_number_of_simulated_1e1a_<<
+    " +/- " << 100*pow((double)_number_of_prompt_electrons_,0.5)/(double)_number_of_simulated_1e1a_<<
+    ")% of total simulated electrons" << std::endl;
+    std::cout << "Number of electrons touching ANY wall: " << _number_of_anywall_electrons_ <<
+    " - (" << 100*(double)_number_of_anywall_electrons_/(double)_number_of_simulated_1e1a_<<
+    " +/- " << 100*pow((double)_number_of_anywall_electrons_,0.5)/(double)_number_of_simulated_1e1a_<<
+    ")% of total simulated electrons" << std::endl;
+    
+    std::cout << "Number of alphas that are delayed: " << _number_of_delayed_alphas_<<
+    " - (" << 100*(double)_number_of_delayed_alphas_/(double)_number_of_simulated_1e1a_<<
+    " +/- " << 100*pow((double)_number_of_delayed_alphas_,0.5)/(double)_number_of_simulated_1e1a_<<
+    ")% of total simulated alphas" << std::endl;
+    std::cout << "Number of alphas not touching the wall nor the foil: " << _number_of_nofoil_alphas_ <<
+    " - (" << 100*(double)_number_of_nofoil_alphas_/(double)_number_of_simulated_1e1a_<<
+    " +/- " << 100*pow((double)_number_of_nofoil_alphas_,0.5)/(double)_number_of_simulated_1e1a_<<
+    ")% of total simulated alphas" << std::endl;
     
     std::cout << "Number of wierdos: " << n_wierdos << std::endl;
 
