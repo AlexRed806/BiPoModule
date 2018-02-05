@@ -14,7 +14,7 @@ plugins : string[5] = "Falaise_CAT" \
 	  	      "TrackFit" \
 		      "Falaise_TrackFit" \
 		      "Falaise_ChargedParticleTracking" \
-              "SimulAna" \
+              "BiPo" \
 
 
 [name="pipeline" type="dpp::chain_module"]
@@ -23,7 +23,7 @@ modules : string[7] = "CalibrateTracker" \
 		      "CATTrackerClusterizer" \
 		      "TrackFitting" \
 		      "ChargedParticleTracker" \
-              "SimulAna" \
+              "BiPo" \
 		      "Dump"
 
 [name="CalibrateTracker" type="snemo::processing::mock_tracker_s2c_module"]
@@ -56,7 +56,7 @@ AFD.minimal_cluster_z_search_distance   : real as length = 30 cm
 # type="snemo::reconstruction::alpha_finder_driver"]
 # logging.priority : string = "warning"
 
-[name="SimulAna" type="SimulAna"]
+[name="BiPo" type="BiPo"]
 logging.priority : string = "warning"
 
  #@description ROOT filename
