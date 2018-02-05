@@ -6,7 +6,7 @@ numberOfEvents : integer = 100000
 
 [name="flsimulate.variantService" type="flsimulate::section"]
 settings : string[4] = "primary_events:generator=Bi214_Po214" \
-	   	       "vertexes:generator=source_pads_external_surface" \
+	   	       "vertexes:generator=source_pads_surface" \
 		       "geometry:layout=Basic" \
 	               "simulation:output_profile=all_details"
 
