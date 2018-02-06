@@ -8,14 +8,12 @@
 #@description Number of events to reconstruct (default: 0 = no limit)
 numberOfEvents : integer = 100000
 
-
 [name="flreconstruct.plugins" type="flreconstruct::section"]
 plugins : string[5] = "Falaise_CAT" \
 	  	      "TrackFit" \
 		      "Falaise_TrackFit" \
 		      "Falaise_ChargedParticleTracking" \
-              	      "SimulAna" \
-
+              	      "BiPo" \
 
 [name="pipeline" type="dpp::chain_module"]
 modules : string[6] = "CalibrateTracker" \
@@ -23,7 +21,7 @@ modules : string[6] = "CalibrateTracker" \
 		      "CATTrackerClusterizer" \
 		      "TrackFitting" \
 		      "ChargedParticleTracker" \
-              	      "SimulAna" \
+              	      "BiPo" \
 		      "Dump"
 
 [name="CalibrateTracker" type="snemo::processing::mock_tracker_s2c_module"]
@@ -52,7 +50,7 @@ AFD.minimal_cluster_xy_search_distance  : real as length = 40 cm
 AFD.minimal_cluster_z_search_distance   : real as length = 30 cm
 
 
-[name="SimulAna" type="SimulAna"]
+[name="BiPo" type="BiPo"]
 logging.priority : string = "warning"
 
  #@description ROOT filename
