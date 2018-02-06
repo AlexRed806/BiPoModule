@@ -6,7 +6,7 @@
 # #@description Reconstruction version (automatic: extracted from input metadata)
 # experimentalSetupUrn : string = "urn:snemo:demonstrator:setup:1.0"
 #@description Number of events to reconstruct (default: 0 = no limit)
-numberOfEvents : integer = 1000
+numberOfEvents : integer = 10000
 
 
 [name="flreconstruct.plugins" type="flreconstruct::section"]
@@ -45,6 +45,15 @@ fitting_models		: string[2] = "helix" "line"
 line.only_guess		: string[4] = "BB" "TB" "BT" "TT"
 helix.only_guess	: string[8] = "BBB" "BBT" "BTT" "TBB" "TBT" "TTB" "BTB" "TTT"
 
+#@description Fit the clusters of delayed Geiger hits
+line.guess.fit_delayed_clusters : boolean = 1
+
+#@description Track fit adds start time as an additionnal parameter to the fit (needs a calibration driver)
+line.fit.fit_start_time    : boolean = 1
+
+#@description Track fit recomputes the drift distance from drift time (needs a calibration driver)
+line.fit.using_drift_time  : boolean = 0
+
 
 [name="ChargedParticleTracker" type="snemo::reconstruction::charged_particle_tracking_module"]
 drivers : string[4] = "VED" "CCD" "CAD" "AFD"
@@ -52,9 +61,6 @@ AFD.minimal_delayed_time                : real as time = 10 us
 AFD.minimal_cluster_xy_search_distance  : real as length = 40 cm
 AFD.minimal_cluster_z_search_distance   : real as length = 30 cm
 
-# [name="AlphaFinder" type="AlphaFinder"]
-# type="snemo::reconstruction::alpha_finder_driver"]
-# logging.priority : string = "warning"
 
 [name="BiPo" type="BiPo"]
 logging.priority : string = "warning"
