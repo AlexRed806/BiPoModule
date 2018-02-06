@@ -54,7 +54,4 @@ AFD.minimal_cluster_z_search_distance   : real as length = 30 cm
 logging.priority : string = "warning"
 
  #@description ROOT filename
- filename : string as path = "BiPo_source_bulk_100000ev.root"
-
-[name="Dump" type="dpp::dump_module"]
-
+ filename : string as path = "BiPo_tracker_all_100000ev.root"
