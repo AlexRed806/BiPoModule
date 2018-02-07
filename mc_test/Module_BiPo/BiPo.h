@@ -111,6 +111,9 @@ private:
     unsigned int _number_of_foil_alphas_;
     unsigned int _number_of_nowall_alphas_;
     unsigned int _number_of_nofoil_alphas_;
+    
+    unsigned int _number_of_1e1a_source_sel_;
+    unsigned int _number_of_1e1a_tracker_sel_;
 
     unsigned int n_wierdos;
     

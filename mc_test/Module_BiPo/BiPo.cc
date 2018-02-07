@@ -198,16 +198,26 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
         return PROCESS_CONTINUE;
     
     const snemo::datamodel::particle_track_data & my_ptd = record_.get<snemo::datamodel::particle_track_data>("PTD");
-        
-    if (!my_ptd.has_particles() || my_ptd.has_non_associated_calorimeters())
-        return PROCESS_CONTINUE;
+    
+    /// Every particle has a trajectory, and every trajectory a non-null cluster
+    /// So, non_associated hits AREN'T PARTICLES
+    
     
     //////////  Condition to select 1e1a events  //////////
-    if (_number_of_event_electrons_ != 1 || _number_of_event_alphas_ != 1) {
-        return PROCESS_CONTINUE;
-    }
+    //if (_number_of_event_electrons_ != 1 || _number_of_event_alphas_ != 1) {
+    //    return PROCESS_CONTINUE;
+    //}
     _number_of_simulated_1e1a_ ++; //increment counter of searched topology
     
+    if (!my_ptd.has_particles())
+        return PROCESS_CONTINUE;
+    
+    /// if there are only gammas.. there's not much to do, plus there are not auxiliaris and crashes (why??)///
+    //if(my_ptd.get_non_associated_calorimeters().size() == my_ptd.get_number_of_particles())
+      //  return PROCESS_CONTINUE;
+
+    //if(my_ptd.get_number_of_particles()!=2)
+     //   std::cout << my_ptd.get_number_of_particles() << std::endl;
     
     //////////  LOOP OVER PARTICLES  //////////
     const snemo::datamodel::particle_track_data::particle_collection_type & my_particles = my_ptd.get_particles();
@@ -244,22 +254,30 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
         else {n_wierdos++;}
             
         //////////  STUDY TRAJECTORY  //////////
+        if(!my_pt.has_trajectory()) std::cout << "Particle without trajectory?!?" << std::endl;
+        
         snemo::datamodel::tracker_trajectory my_tj = my_pt.get_trajectory();
         
         if(my_tj.get_pattern().get_pattern_id() == "helix") {
             is_helix = true;
-            
-            _root_variables_reconstructed_particles_.fitted_time = my_tj.get_auxiliaries().fetch_real_scalar("t0");
-            electron_fitted_t = _root_variables_reconstructed_particles_.fitted_time;
+        
+            //_root_variables_reconstructed_particles_.fitted_time = 0;///my_tj.get_auxiliaries().fetch_real_scalar("t0");
+            //electron_fitted_t = _root_variables_reconstructed_particles_.fitted_time;
         }
         else if(my_tj.get_pattern().get_pattern_id() == "line") {
             is_straight = true;
 	
         //if(my_tj.has_auxiliaries())
+            std::cout << my_tj.get_hit_id() << " ";
+            std::cout << my_tj.get_auxiliaries().get_unit("t0") << " ";
             _root_variables_reconstructed_particles_.fitted_time = my_tj.get_auxiliaries().fetch_real_scalar("t0");
+            std::cout << _root_variables_reconstructed_particles_.fitted_time << " ";
             alpha_fitted_t = _root_variables_reconstructed_particles_.fitted_time;
             _root_variables_topologies_.alpha_track_length = my_tj.get_pattern().get_shape().get_length();
         }
+        else {n_wierdos++;}
+        std::cout << std::endl;
+
         _root_variables_reconstructed_particles_.track_length = my_tj.get_pattern().get_shape().get_length();
 
         
@@ -269,11 +287,14 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
           if(my_cl.is_delayed()) is_delayed = true;
           else is_prompt = true;
         }
+        else std::cout << "Trajectory without cluster?!?" << std::endl;
         /// end of study trajectory ///
             
         //////////  LOOP OVER VERTICES  //////////
         const snemo::datamodel::particle_track::vertex_collection_type & my_vertices = my_pt.get_vertices();
-                
+        
+        if(my_vertices.size() > 2) std::cout << "More than two vertices?!?" << std::endl;
+        
         for (const auto & iv : my_vertices) {
                 
             if(snemo::datamodel::particle_track::vertex_is (iv.get(), snemo::datamodel::particle_track::vertex_type::VERTEX_ON_SOURCE_FOIL))
@@ -336,7 +357,8 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
         }
         if(_got_electron_source_sel_ && _got_alpha_source_sel_) {
             
-            _root_variables_topologies_.alpha_track_length = alpha_track_length;
+            _number_of_1e1a_source_sel_++;
+            //_root_variables_topologies_.alpha_track_length = alpha_track_length;
             _root_variables_topologies_.delta_t_prompt_delayed = alpha_fitted_t - electron_fitted_t;
             _root_tree_reconstructed_1e1a_topology_source_sel_->Fill();
         }
@@ -366,7 +388,8 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
         }
         if(_got_electron_tracker_sel_ && _got_alpha_tracker_sel_) {
             
-            _root_variables_topologies_.alpha_track_length = alpha_track_length;
+            _number_of_1e1a_tracker_sel_++;
+            //_root_variables_topologies_.alpha_track_length = alpha_track_length;
             _root_variables_topologies_.delta_t_prompt_delayed = alpha_fitted_t - electron_fitted_t;
             _root_tree_reconstructed_1e1a_topology_tracker_sel_->Fill();
         }
@@ -461,6 +484,11 @@ void BiPo::print_results() {
       " +/- " << 100*pow((double)_number_of_nowall_alphas_,0.5)/(double)_number_of_simulated_1e1a_<<
       ")% of total simulated alphas" << std::endl;
     
+    std::cout << "Number of 1e1a topologies: " << _number_of_1e1a_source_sel_ <<
+    " - (" << 100*(double)_number_of_1e1a_source_sel_/(double)_number_of_simulated_1e1a_<<
+    " +/- " << 100*pow((double)_number_of_1e1a_source_sel_,0.5)/(double)_number_of_simulated_1e1a_<<
+    ")% of total simulated alphas" << std::endl;
+    
     std::cout << "------  RESULTS OF THE CUT FLOW FOR TRACKER SELECTION  ------" << std::endl;
 
     std::cout << "Number of electrons that are prompt: " << _number_of_prompt_electrons_ <<
@@ -480,6 +508,12 @@ void BiPo::print_results() {
     " - (" << 100*(double)_number_of_nofoil_alphas_/(double)_number_of_simulated_1e1a_<<
     " +/- " << 100*pow((double)_number_of_nofoil_alphas_,0.5)/(double)_number_of_simulated_1e1a_<<
     ")% of total simulated alphas" << std::endl;
+    
+    std::cout << "Number of 1e1a topologies: " << _number_of_1e1a_tracker_sel_ <<
+    " - (" << 100*(double)_number_of_1e1a_tracker_sel_/(double)_number_of_simulated_1e1a_<<
+    " +/- " << 100*pow((double)_number_of_1e1a_tracker_sel_,0.5)/(double)_number_of_simulated_1e1a_<<
+    ")% of total simulated alphas" << std::endl;
+    
     
     std::cout << "Number of wierdos: " << n_wierdos << std::endl;
 
