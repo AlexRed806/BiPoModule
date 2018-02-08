@@ -13,13 +13,13 @@
 
 #include "bayeux/dpp/base_module.h"
 
-// Forward declaration
+// forward declaration
 class TFile;
 class TTree;
 class TH1I;
 class TH1F;
 
-// Structure to embed ROOT variable
+// structures to embed ROOT variable
 struct root_variables_particles {
   //SD variables
   double kinetic_energy;
@@ -36,7 +36,50 @@ struct root_variables_topologies {
   //bool has_prompt;
   //bool has_delayed;
   double alpha_track_length;
+  double alpha_n_geiger_hits;
   double delta_t_prompt_delayed;
+};
+
+// structures to embed particles and events information
+struct particle {
+    std::string trajectory_pattern; //helix or line
+    double reconstructed_time; //true emission time for SD, reconstructed for PTD (from calo for electrons, from fit for alphas)
+    bool is_delayed; //1 if delayed, 0 if prompt
+    int charge; //-1, 0, +1
+    double track_length;
+    unsigned int number_of_geiger_hits;
+    bool does_hit_main_calo; //to be removed
+    bool does_hit_x_calo; //to be removed
+    bool does_hit_gamma_veto; //to be removed
+    bool does_hit_source_foil; //to be removed
+    std::vector<double> main_calo_vtx;
+    std::vector<double> x_calo_vtx;
+    std::vector<double> gamma_veto_vtx;
+    std::vector<double> source_foil_vtx;
+    bool is_electron_source_sel = false;
+    bool is_alpha_source_sel = false;
+    bool is_electron_tracker_sel = false;
+    bool is_alpha_tracker_sel = false;
+};
+struct mc_particle {
+    std::string type;
+    double emission_time;
+    double kinetic_energy;
+};
+struct event {
+    unsigned int number_of_electrons = 0;
+    unsigned int number_of_alphas = 0;
+    unsigned int number_of_gammas = 0;
+    std::vector<mc_particle> event_mc_particles;
+    std::vector<particle> event_particles;
+    double prompt_time, delayed_time;
+};
+
+struct simulation {
+    unsigned int number_of_electrons = 0;
+    unsigned int number_of_alphas = 0;
+    unsigned int number_of_gammas = 0;
+    unsigned int number_of_1e1a = 0;
 };
 
 class BiPo : public dpp::base_module {
@@ -73,6 +116,8 @@ private:
     
     root_variables_topologies _root_variables_topologies_;
     
+    simulation _simulation_;
+    
     bool is_helix;
     bool is_straight;
     bool is_prompt;
@@ -89,27 +134,18 @@ private:
     bool _got_alpha_tracker_sel_;
     bool _got_electron_tracker_sel_;
 
-    unsigned int _number_of_simulated_electrons_;
-    unsigned int _number_of_simulated_alphas_;
-    unsigned int _number_of_simulated_gammas_;
-    unsigned int _number_of_simulated_1e1a_;
-
-    unsigned int _number_of_event_electrons_;
-    unsigned int _number_of_event_alphas_;
-    unsigned int _number_of_event_gammas_;
-
+    unsigned int _number_of_prompts_;
     unsigned int _number_of_electrons_;
-    unsigned int _number_of_prompt_electrons_;
-    unsigned int _number_of_helix_electrons_;
     unsigned int _number_of_foil_electrons_;
     unsigned int _number_of_wall_electrons_;
     unsigned int _number_of_anywall_electrons_;
     unsigned int _number_of_negative_charge_electrons_;
 
+    unsigned int _number_of_delayeds_;
     unsigned int _number_of_alphas_;
-    unsigned int _number_of_delayed_alphas_;
     unsigned int _number_of_foil_alphas_;
-    unsigned int _number_of_nowall_alphas_;
+    unsigned int _number_of_foil_nocalo_alphas_;
+    unsigned int _number_of_nofoil_nocalo_alphas_;
     unsigned int _number_of_nofoil_alphas_;
     
     unsigned int _number_of_1e1a_source_sel_;
@@ -117,7 +153,7 @@ private:
 
     unsigned int n_wierdos;
     
-    //Temporary variables
+    // temporary variables
     double alpha_true_t, alpha_fitted_t, electron_true_t, electron_fitted_t;
     double electron_true_ekin;
 

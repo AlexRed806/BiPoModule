@@ -6,7 +6,7 @@
 # #@description Reconstruction version (automatic: extracted from input metadata)
 # experimentalSetupUrn : string = "urn:snemo:demonstrator:setup:1.0"
 #@description Number of events to reconstruct (default: 0 = no limit)
-numberOfEvents : integer = 100
+numberOfEvents : integer = 3000
 
 
 [name="flreconstruct.plugins" type="flreconstruct::section"]
@@ -57,11 +57,10 @@ line.fit.using_drift_time  : boolean = 0
 
 
 [name="ChargedParticleTracker" type="snemo::reconstruction::charged_particle_tracking_module"]
-drivers : string[3] = "VED" "CCD" "CAD"
-#"AFD"
-#AFD.minimal_delayed_time                : real as time = 10 us
-#AFD.minimal_cluster_xy_search_distance  : real as length = 40 cm
-#AFD.minimal_cluster_z_search_distance   : real as length = 30 cm
+drivers : string[4] = "VED" "CCD" "CAD" "AFD"
+AFD.minimal_delayed_time                : real as time = 10 us
+AFD.minimal_cluster_xy_search_distance  : real as length = 40 cm
+AFD.minimal_cluster_z_search_distance   : real as length = 30 cm
 
 
 [name="BiPo" type="BiPo"]
