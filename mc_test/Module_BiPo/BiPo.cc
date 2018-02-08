@@ -331,8 +331,6 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
         }
         else std::cout << "Trajectory without cluster?!?" << std::endl;
         /// end of study trajectory ///
-            
-
 
         /*
         if (snemo::datamodel::particle_track::particle_has_negative_charge(my_pt)) {
@@ -382,6 +380,7 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
             if(_particle_.trajectory_pattern=="straight") { _number_of_alphas_++;
                 if(_particle_.does_hit_source_foil) { _number_of_foil_alphas_++;
                     if(!(_particle_.does_hit_main_calo || _particle_.does_hit_x_calo || _particle_.does_hit_gamma_veto)) {
+                    //if(!(_particle_.does_hit_main_calo)) {
                         _particle_.is_alpha_source_sel = true;
                         _number_of_foil_nocalo_alphas_++;
                         _root_tree_reconstructed_alphas_source_sel_->Fill();
@@ -411,8 +410,6 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
                                                || (_event_.event_particles[1].is_electron_source_sel && _event_.event_particles[0].is_alpha_source_sel) ) ) {
         
         _number_of_1e1a_source_sel_++;
-    
-        double temp, temp1;
         
         for(std::vector<particle>::iterator it = _event_.event_particles.begin(); it != _event_.event_particles.end(); ++it) {
         
@@ -435,8 +432,6 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
                                                (_event_.event_particles[0].is_electron_tracker_sel && _event_.event_particles[1].is_alpha_tracker_sel)
                                                || (_event_.event_particles[1].is_electron_tracker_sel && _event_.event_particles[0].is_alpha_tracker_sel) ) ) {
         _number_of_1e1a_tracker_sel_++;
-        
-        double temp, temp1;
         
         for(std::vector<particle>::iterator it = _event_.event_particles.begin(); it != _event_.event_particles.end(); ++it) {
             

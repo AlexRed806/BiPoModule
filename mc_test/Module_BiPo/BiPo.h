@@ -56,10 +56,12 @@ struct particle {
     std::vector<double> x_calo_vtx;
     std::vector<double> gamma_veto_vtx;
     std::vector<double> source_foil_vtx;
-    bool is_electron_source_sel = false;
-    bool is_alpha_source_sel = false;
-    bool is_electron_tracker_sel = false;
-    bool is_alpha_tracker_sel = false;
+    bool is_electron_source_sel;
+    bool is_alpha_source_sel;
+    bool is_electron_tracker_sel;
+    bool is_alpha_tracker_sel;
+    
+    particle(): trajectory_pattern("none"), reconstructed_time(pow(-1,0.5)), is_delayed(0), charge(pow(-1,0.5)), track_length(pow(-1,0.5)), number_of_geiger_hits(pow(-1,0.5)), does_hit_main_calo(0), does_hit_x_calo(0), does_hit_gamma_veto(0), does_hit_source_foil(0), is_electron_source_sel(0), is_alpha_source_sel(0), is_electron_tracker_sel(0), is_alpha_tracker_sel(0) {}
 };
 struct mc_particle {
     std::string type;
@@ -67,12 +69,14 @@ struct mc_particle {
     double kinetic_energy;
 };
 struct event {
-    unsigned int number_of_electrons = 0;
-    unsigned int number_of_alphas = 0;
-    unsigned int number_of_gammas = 0;
+    unsigned int number_of_electrons;
+    unsigned int number_of_alphas;
+    unsigned int number_of_gammas;
     std::vector<mc_particle> event_mc_particles;
     std::vector<particle> event_particles;
     double prompt_time, delayed_time;
+    
+    event(): number_of_electrons(0), number_of_alphas(0), number_of_gammas(0), prompt_time(pow(-1,0.5)), delayed_time(pow(-1,0.5)) {}
 };
 
 struct simulation {
@@ -80,6 +84,8 @@ struct simulation {
     unsigned int number_of_alphas = 0;
     unsigned int number_of_gammas = 0;
     unsigned int number_of_1e1a = 0;
+    
+    simulation(): number_of_electrons(0), number_of_alphas(0), number_of_gammas(0), number_of_1e1a(0) {}
 };
 
 class BiPo : public dpp::base_module {
