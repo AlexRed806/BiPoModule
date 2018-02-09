@@ -36,7 +36,7 @@ struct root_variables_topologies {
   //bool has_prompt;
   //bool has_delayed;
   double alpha_track_length;
-  double alpha_n_geiger_hits;
+  int alpha_n_geiger_hits;
   double delta_t_prompt_delayed;
 };
 

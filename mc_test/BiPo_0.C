@@ -26,10 +26,9 @@ void BiPo() {
     const unsigned int n_files = 3;
     const int n_events = 100000;
     const double activities[n_files] = {0.0154,0.00018,0.0455};
-    //const double efficiencies[n_files] = {0.018342, 0.0866779, 0.0080547};
-    const double efficiencies[n_files] = {0.109888, 0.00555601, 0.0897256};
+    const double efficiencies[n_files] = {0.018342, 0.0866779, 0.0080547};
+    //const double eficiencies[n_files] = {0.109888, 0.00555601, 0.0897256};
     const double given_exposure = 86400.*60.;
-    const int n_pseudo = 10000;
     
     double mc_exposures[n_files];
     for(int jj=0;jj<3;jj++) mc_exposures[jj] = (double)n_events / activities[jj];
@@ -53,8 +52,8 @@ void BiPo() {
         cout << "Opening file " << simul_name.str() << endl;
  
         TFile *my_file = TFile::Open(simul_name.str().data());
-        //TTree *tree_1e1a = (TTree*)my_file->Get("tree_rec_1e1a_source");
-        TTree *tree_1e1a = (TTree*)my_file->Get("tree_rec_1e1a_tracker");
+        TTree *tree_1e1a = (TTree*)my_file->Get("tree_rec_1e1a_source");
+        //TTree *tree_1e1a = (TTree*)my_file->Get("tree_rec_1e1a_tracker");
 
         int n_geiger;
         double track_length, delta_t;
@@ -67,11 +66,12 @@ void BiPo() {
         for (Long64_t i=0;i<nentries;i++) {
             tree_1e1a->GetEntry(i);
             
-            double exposure_correction = 1./(mc_exposures[i_file]);
+            double exposure_correction = /*given_exposure*/1./(mc_exposures[i_file]);
             
             h_track_length[i_file]->Fill(track_length,exposure_correction);
             h_cumulative_track_length->Fill(track_length,exposure_correction);
 
+            //cout << n_geiger <<" "<< track_length <<" "<< delta_t << endl;
         }
 
     }
@@ -139,49 +139,82 @@ void BiPo() {
     
     RooAddPdf model("model","model",RooArgSet(*pdfs[0],*pdfs[1],*pdfs[2]),RooArgList(*fitted_activity[0],*fitted_activity[1],*fitted_activity[2]));
 
-    for(int i_pseudo=0;i_pseudo<n_pseudo;i_pseudo++) {
-        
-        RooDataSet * data = pdf.generate( track_length_obs, h_cumulative_track_length->Integral()*given_exposure);
-        
-        data->SetName("data");
-        model.fitTo(*data,PrintLevel(-1));
+    for(int jjj=0;jjj<1000;jjj++) {
 
-        for(int i_file=0; i_file<n_files; i_file++) {
-            
-            h_fitted_activities[i_file]->Fill( fitted_activity[i_file]->getValV()/(given_exposure*efficiencies[i_file]) );
-        }
-        
-        if(verbose) {
-        
-            TCanvas *c1 = new TCanvas("track_length_pseudo","track_length_pseudo",1961,344,700,502);
-        
-        
-            RooPlot * pl = track_length_obs.frame(Title("pseudo track length distribution"));
-            data->plotOn(pl);
-            model.plotOn(pl);
-            pl->SetTitle("");
-            pl->Draw();
+    
+    RooDataSet * data = pdf.generate( track_length_obs, h_cumulative_track_length->Integral()*given_exposure);
+    
+    data->SetName("data");
+    model.fitTo(*data,PrintLevel(-1));
 
-            cout << fitted_activity[0]->getValV() << endl;
-            cout << fitted_activity[1]->getValV() << endl;
-            cout << fitted_activity[2]->getValV() << endl;
-        }
+    for(int i_file=0; i_file<n_files; i_file++) {
+        
+        h_fitted_activities[i_file]->Fill( fitted_activity[i_file]->getValV()/(given_exposure*efficiencies[i_file]) );
+        
     }
     
-    //IMPORTANT: fitted_activity[0]->getValV() is equivalent to h_track_length[0]->Integral()*given_exposure
+    if(verbose) {
+    TCanvas *c1 = new TCanvas("track_length_pseudo","track_length_pseudo",1961,344,700,502);
+    
+    RooPlot * pl = track_length_obs.frame(Title("pseudo track length distribution"));
+        pdfs[0]->plotOn(pl);
+        pdfs[1]->plotOn(pl);
+        pdfs[2]->plotOn(pl);
+    data->plotOn(pl);
+    model.plotOn(pl);
+    pl->SetTitle("");
+    pl->Draw();
+    
+        //cout << "source bulk: " << fitted_activity[0]->getValV()/(h_track_length[0]->Integral()*given_exposure) << " +/- " << fitted_activity[0]->getError()/given_exposure << endl;
 
+        cout << fitted_activity[0]->getValV() << endl;
+        cout << fitted_activity[1]->getValV() << endl;
+        cout << fitted_activity[2]->getValV() << endl;
+        cout << fitted_activity[0]->getValV() * h_track_length[0]->Integral() << endl;
+        cout << fitted_activity[0]->getValV() * h_track_length[0]->Integral() / (efficiencies[0]*given_exposure) << endl;;
         
+    //cout << "Fitted activities" << endl;
+    //cout << "source bulk: " << fitted_activity[0]->getValV()/(efficiencies[0]*given_exposure) << " +/- " << fitted_activity[0]->getError()/given_exposure << endl;
+    //cout << "source surface: " << fitted_activity[1]->getValV()/(efficiencies[1]*given_exposure) << " +/- " << /fitted_activity[1]->getError()/given_exposure << endl;
+    //cout << "tracker: " << fitted_activity[2]->getValV()/(efficiencies[2]*given_exposure) << " +/- " << fitted_activity[2]->getError()/given_exposure << endl;
+    
+    
+    TCanvas *c3 = new TCanvas("track_length_model","track_length_model",1961,344,700,502);
+
+    cout << fitted_activity[0]->getValV() << endl;
+    cout << h_track_length[0]->Integral()*given_exposure << endl;
+    
+    cout << fitted_activity[0]->getValV()/(given_exposure*efficiencies[0]) << endl;
+    cout << fitted_activity[1]->getValV()/(given_exposure*efficiencies[1]) << endl;
+    cout << fitted_activity[2]->getValV()/(given_exposure*efficiencies[2]) << endl;
+
+    //data->Draw();
+    h_cumulative_track_length->Scale(given_exposure);
+    h_cumulative_track_length->SetLineColor(1);
+    h_cumulative_track_length->Draw();
+    //h_track_length[0]->Scale((double)fitted_activity[0]->getValV()*given_exposure );
+    h_track_length[0]->Scale(given_exposure );
+    h_track_length[0]->SetLineColor(2);
+    h_track_length[0]->Draw("sames");
+    //h_track_length[1]->Scale((double)fitted_activity[1]->getValV()*given_exposure );
+    h_track_length[1]->Scale(given_exposure );
+    h_track_length[1]->SetLineColor(3);
+    h_track_length[1]->Draw("sames");
+    //h_track_length[2]->Scale((double)fitted_activity[2]->getValV()*given_exposure );
+    h_track_length[2]->Scale(given_exposure );
+    h_track_length[2]->SetLineColor(4);
+    h_track_length[2]->Draw("sames");
+    }
+}
+    
     TCanvas *c4 = new TCanvas("track_length_models","track_length_models",1961,344,700,502);
 
-    h_fitted_activities[0]->SetLineWidth(2);
     h_fitted_activities[0]->SetLineColor(2);
     h_fitted_activities[0]->Draw();
 
-    h_fitted_activities[1]->SetLineWidth(2);
     h_fitted_activities[1]->SetLineColor(3);
     h_fitted_activities[1]->Draw("sames");
 
-    h_fitted_activities[2]->SetLineWidth(2);
     h_fitted_activities[2]->SetLineColor(4);
     h_fitted_activities[2]->Draw("sames");
 
