@@ -6,7 +6,7 @@
 # #@description Reconstruction version (automatic: extracted from input metadata)
 # experimentalSetupUrn : string = "urn:snemo:demonstrator:setup:1.0"
 #@description Number of events to reconstruct (default: 0 = no limit)
-numberOfEvents : integer = 100000
+numberOfEvents : integer = 500000
 
 [name="flreconstruct.plugins" type="flreconstruct::section"]
 plugins : string[5] = "Falaise_CAT" \
@@ -42,6 +42,15 @@ fitting_models		: string[2] = "helix" "line"
 line.only_guess		: string[4] = "BB" "TB" "BT" "TT"
 helix.only_guess	: string[8] = "BBB" "BBT" "BTT" "TBB" "TBT" "TTB" "BTB" "TTT"
 
+#@description Fit the clusters of delayed Geiger hits
+line.guess.fit_delayed_clusters : boolean = 1
+
+#@description Track fit adds start time as an additionnal parameter to the fit (needs a calibration driver)
+line.fit.fit_start_time    : boolean = 1
+
+#@description Track fit recomputes the drift distance from drift time (needs a calibration driver)
+line.fit.using_drift_time  : boolean = 0
+
 
 [name="ChargedParticleTracker" type="snemo::reconstruction::charged_particle_tracking_module"]
 drivers : string[4] = "VED" "CCD" "CAD" "AFD"
@@ -54,7 +63,7 @@ AFD.minimal_cluster_z_search_distance   : real as length = 30 cm
 logging.priority : string = "warning"
 
  #@description ROOT filename
- filename : string as path = "BiPo_source_bulk_100000ev.root"
+ filename : string as path = "BiPo_source_bulk_500000ev.root"
 
 [name="Dump" type="dpp::dump_module"]
 

@@ -24,7 +24,7 @@ void BiPo() {
 
     
     const unsigned int n_files = 3;
-    const int n_events = 100000;
+    const int n_events = 500000;
     const double activities[n_files] = {0.0154,0.00018,0.0455};
     //const double efficiencies[n_files] = {0.018342, 0.0866779, 0.0080547};
     const double efficiencies[n_files] = {0.109888, 0.00555601, 0.0897256};
@@ -49,7 +49,7 @@ void BiPo() {
     for(int i_file=0; i_file<n_files; i_file++) {
     
         stringstream simul_name;
-        simul_name << "./root_files/BiPo_100000ev/BiPo_" << simul_names[i_file] << "_100000ev.root";
+        simul_name << "./root_files/BiPo_500000ev/BiPo_" << simul_names[i_file] << "_500000ev.root";
         cout << "Opening file " << simul_name.str() << endl;
  
         TFile *my_file = TFile::Open(simul_name.str().data());
