@@ -26,6 +26,7 @@ void BiPo() {
     
     const unsigned int n_files = 3;
     const int n_events = 200000;
+
     const double activities[n_files] = {0.0154,0.00018,0.0455};
     const double efficiencies[n_files] = {0.018342, 0.0866779, 0.0080547};
     //const double efficiencies[n_files] = {0.109888, 0.00555601, 0.0897256};
