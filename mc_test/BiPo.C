@@ -31,7 +31,7 @@ void BiPo() {
     const double efficiencies[n_files] = {0.018342, 0.0866779, 0.0080547};
     //const double efficiencies[n_files] = {0.109888, 0.00555601, 0.0897256};
     const double given_exposure = 86400.*(double)days_of_exposure;
-    const int n_pseudo = 1000;
+    const int n_pseudo = 100000;
     
     double mc_exposures[n_files];
     for(int jj=0;jj<3;jj++) mc_exposures[jj] = (double)n_events / activities[jj];
