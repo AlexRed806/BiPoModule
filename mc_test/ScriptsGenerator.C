@@ -17,7 +17,7 @@ void ScriptsGenerator() {
     gROOT->SetStyle("Plain");
 
     const unsigned int total_number_of_events = 1000000;
-    const unsigned int number_of_scripts = 10;
+    const unsigned int number_of_scripts = 20;
     const bool do_simul = true, do_reco = true;
 
     const double aw_fw_ratio = 0.123344784871;
@@ -40,7 +40,7 @@ void ScriptsGenerator() {
     cpu_per_event_reco[0] = 0.1305;
     cpu_per_event_reco[1] = 0.1505; 
     cpu_per_event_reco[2] = 0.21; 
-    cpu_per_event_reco[3] = 0.35;//not known yet 
+    cpu_per_event_reco[3] = 0.4237;//not known yet 
 
     char name[128];
     char simul_names[4][64] = {"source_bulk","source_surface","tracker_aw","tracker_fw"};
@@ -79,16 +79,15 @@ void ScriptsGenerator() {
 	      f_config << "[name=\"flsimulate\" type=\"flsimulate::section\"]\n";
 	      f_config << "numberOfEvents : integer = "<<number_of_events[i_simul]<<"\n\n";
 	      f_config << "[name=\"flsimulate.variantService\" type=\"flsimulate::section\"]\n";
-	      f_config << "settings : string[4] = \"primary_events:generator=Bi214_Po214\" \n";
-	      f_config << "\"vertexes:generator="<<vertex_generator_name[i_simul]<<"\" \n";
-	      f_config << "\"geometry:layout=Basic\" \n";
+	      f_config << "settings : string[4] = \"primary_events:generator=Bi214_Po214\" \\\n";
+	      f_config << "\"vertexes:generator="<<vertex_generator_name[i_simul]<<"\" \\\n";
+	      f_config << "\"geometry:layout=Basic\" \\\n";
 	      f_config << "\"simulation:output_profile=all_details\" \n\n";
 	      f_config << "[name=\"flsimulate.simulation\" type=\"flsimulate::section\"]\n";
 	      f_config << "rngEventGeneratorSeed         : integer = "<<seeds[i_script][0]<<"\n";
 	      f_config << "rngVertexGeneratorSeed        : integer = "<<seeds[i_script][3]<<"\n";
 	      f_config << "rngGeant4GeneratorSeed        : integer = "<<seeds[i_script][1]<<"\n";
-	      f_config << "rngHitProcessingGeneratorSeed : integer = "<<seeds[i_script][2]<<"\n\n";
-	      f_config << "output_profile : string[1] = \"all_details\"\n";
+	      f_config << "rngHitProcessingGeneratorSeed : integer = "<<seeds[i_script][2]<<"\n";
 	      f_config.close();
 	    }
 	    else cout << "Unable to open file" << endl;
@@ -100,7 +99,7 @@ void ScriptsGenerator() {
 	      f_script << "cd $HOME\n\n";
 	      f_script << "source ConfigNemoLyon.csh\n\n";
 	      f_script << "cd analysis/mc_test/\n\n";
-	      f_script << "flsimulate -c $SIMUL_CONFIG_PATH/simul_config_BiPo_"<< simul_names[i_simul] <<"_"<< i_script <<" -o $NEMO_PATH/analysis/mc_test/brio_files/temp/BiPo_"<< simul_names[i_simul] <<"_"<< total_number_of_events <<"ev_"<< i_script <<".brio\n";
+	      f_script << "flsimulate -c $SIMUL_CONFIG_PATH/../temp/simul_config_BiPo_"<< simul_names[i_simul] <<"_"<< i_script <<" -o $NEMO_PATH/analysis/mc_test/brio_files/temp/BiPo_"<< simul_names[i_simul] <<"_"<< total_number_of_events <<"ev_"<< i_script <<".brio\n";
 	      f_script.close();
 	    }
 	    else cout << "Unable to open file" << endl;
@@ -118,7 +117,7 @@ void ScriptsGenerator() {
 
     if(do_reco) {
       
-      sprintf(name,"./script_launcher_BiPo_reco_%dev",total_number_of_events);
+      sprintf(name,"./script_launcher_BiPo_reco_%dev.csh",total_number_of_events);
       ofstream f_launcher (name);
       if (f_launcher.is_open()) {
 	
@@ -141,17 +140,17 @@ void ScriptsGenerator() {
 	      f_config << "#@description Number of events to reconstruct (default: 0 = no limit)\n";
 	      f_config << "numberOfEvents : integer = "<<number_of_events[i_simul]<<"\n\n";
 	      f_config << "[name=\"flreconstruct.plugins\" type=\"flreconstruct::section\"]\n";
-	      f_config << "plugins : string[5] = \"Falaise_CAT\" \\ \n";
-	      f_config << "\"TrackFit\" \\ \n";
-	      f_config << "\"Falaise_TrackFit\" \\ \n";
-	      f_config << "\"Falaise_ChargedParticleTracking\" \\ \n";
-	      f_config << "\"BiPo\" \\ \n\n";
+	      f_config << "plugins : string[5] = \"Falaise_CAT\" \\\n";
+	      f_config << "\"TrackFit\" \\\n";
+	      f_config << "\"Falaise_TrackFit\" \\\n";
+	      f_config << "\"Falaise_ChargedParticleTracking\" \\\n";
+	      f_config << "\"BiPo\" \\\n\n";
 	      f_config << "[name=\"pipeline\" type=\"dpp::chain_module\"] \n";
-	      f_config << "modules : string[6] = \"CalibrateTracker\" \\ \n";
-	      f_config << "\"CalibrateCalorimeters\" \\ \n";
-	      f_config << "\"CATTrackerClusterizer\" \\ \n";
-	      f_config << "\"TrackFitting\" \\ \n";
-	      f_config << "\"ChargedParticleTracker\" \\ \n";
+	      f_config << "modules : string[6] = \"CalibrateTracker\" \\\n";
+	      f_config << "\"CalibrateCalorimeters\" \\\n";
+	      f_config << "\"CATTrackerClusterizer\" \\\n";
+	      f_config << "\"TrackFitting\" \\\n";
+	      f_config << "\"ChargedParticleTracker\" \\\n";
 	      f_config << "\"BiPo\"\n\n";
 	      f_config << "[name=\"CalibrateTracker\" type=\"snemo::processing::mock_tracker_s2c_module\"]\n";
 	      f_config << "logging.priority : string = \"warning\"\n\n";
@@ -180,7 +179,7 @@ void ScriptsGenerator() {
 	      f_config << "[name=\"BiPo\" type=\"BiPo\"]\n";
 	      f_config << "logging.priority : string = \"warning\"\n\n";
 	      f_config << "#@description ROOT filename\n";
-	      f_config << "filename : string as path = \"$NEMO_PATH/analysis/mc_test/root_files/temp/ BiPo_"<< simul_names[i_simul] <<"_"<< total_number_of_events <<"ev_"<< i_script <<".root\n";
+	      f_config << "filename : string as path = \"/sps/nemo/scratch/aminotti/analysis/mc_test/root_files/temp/BiPo_"<< simul_names[i_simul] <<"_"<< total_number_of_events <<"ev_"<< i_script <<".root\"\n";
 	      f_config.close();
 	    }
 	    else cout << "Unable to open file" << endl;
@@ -192,7 +191,7 @@ void ScriptsGenerator() {
 	      f_script << "cd $HOME\n\n";
 	      f_script << "source ConfigNemoLyon.csh\n\n";
 	      f_script << "cd analysis/mc_test/\n\n";
-	      f_script << "flreconstruct -p $RECO_CONFIG_PATH/simul_config_BiPo_"<< simul_names[i_simul] <<"_"<< i_script <<" -i $NEMO_PATH/analysis/mc_test/brio_files/temp/BiPo_"<< simul_names[i_simul] <<"_"<< total_number_of_events <<"ev_"<< i_script <<".brio -o $NEMO_PATH/analysis/mc_test/brio_files/temp/BiPo_"<< simul_names[i_simul] <<"_"<< total_number_of_events <<"ev_"<< i_script <<".reco.brio\n";
+	      f_script << "flreconstruct -p $RECO_CONFIG_PATH/../temp/reco_config_BiPo_"<< simul_names[i_simul] <<"_"<< i_script <<" -i $NEMO_PATH/analysis/mc_test/brio_files/temp/BiPo_"<< simul_names[i_simul] <<"_"<< total_number_of_events <<"ev_"<< i_script <<".brio -o $NEMO_PATH/analysis/mc_test/brio_files/temp/BiPo_"<< simul_names[i_simul] <<"_"<< total_number_of_events <<"ev_"<< i_script <<".reco.brio\n";
 	      f_script.close();
 	    }
 	    else cout << "Unable to open file" << endl;
