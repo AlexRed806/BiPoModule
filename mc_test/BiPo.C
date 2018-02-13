@@ -12,7 +12,7 @@
 #include "TFile.h"
 #include "TTree.h"
 
-void BiPo(unsigned int n_ev, unsigned int n_ps, unsigned int n_day) {
+void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsigned int days_of_exposure, const string type_of_sel) {
 
     using namespace RooFit;
     using namespace RooStats;
@@ -21,29 +21,25 @@ void BiPo(unsigned int n_ev, unsigned int n_ps, unsigned int n_day) {
     gStyle->SetOptFit(1111);
     gStyle->SetOptStat(1111111);
     //gStyle->SetOptStat(0);
-
-    const int days_of_exposure = n_day;
     
     const unsigned int n_files = 3;
-    const int n_events = n_ev;
-
+    const unsigned int first_file = 0;
+    const unsigned int poly_order = 3;
     const double activities[n_files] = {0.0154,0.00018,0.0455};
-    const double efficiencies[n_files] = {0.018342, 0.0866779, 0.0080547};
-    //const double efficiencies[n_files] = {0.109888, 0.00555601, 0.0897256};
     const double given_exposure = 86400.*(double)days_of_exposure;
-    const int n_pseudo = n_ps;
-    
     const double fit_limit_coeffs[2] = {0.,5.};
+    
+    double efficiencies[n_files];
     double fit_limits[n_files][2];
     
     double mc_exposures[n_files];
-    for(int jj=0;jj<3;jj++) mc_exposures[jj] = (double)n_events / activities[jj];
+    for(int jj=first_file;jj<n_files;jj++) mc_exposures[jj] = (double)n_events / activities[jj];
     
     char name[56];
-    char simul_names[3][54] = {"source_bulk","source_surface","tracker_all"};
+    char simul_names[n_files][54] = {"source_bulk","source_surface","tracker_all"};
 
     TH1D *h_track_length[n_files];
-    for(int i_file=0; i_file<n_files; i_file++) {
+    for(int i_file=first_file; i_file<n_files; i_file++) {
         sprintf(name,"track_length_%s",simul_names[i_file]);
         h_track_length[i_file] = new TH1D(name,name,100,0,500);
     }
@@ -51,7 +47,7 @@ void BiPo(unsigned int n_ev, unsigned int n_ps, unsigned int n_day) {
 
     TH1D *h_pseudo_track_length = new TH1D("pseudo_track_length","pseudo_track_length",100,0,500);
 
-    for(int i_file=0; i_file<n_files; i_file++) {
+    for(int i_file=first_file; i_file<n_files; i_file++) {
         
         fit_limits[i_file][0] = activities[i_file]*fit_limit_coeffs[0];
         fit_limits[i_file][1] = activities[i_file]*fit_limit_coeffs[1];
@@ -63,10 +59,12 @@ void BiPo(unsigned int n_ev, unsigned int n_ps, unsigned int n_day) {
         TFile *my_file = TFile::Open(simul_name.str().data());
         //TTree *tree_1e1a = (TTree*)my_file->Get("tree_rec_1e1a_source");
         //TTree *tree_1e1a = (TTree*)my_file->Get("tree_rec_1e1a_tracker");
-        TChain *tree_1e1a = new TChain("tree_rec_1e1a_source");
-        //TChain *tree_1e1a = new TChain("tree_rec_1e1a_tracker");
+        TChain *tree_1e1a;
+        if(type_of_sel=="source") tree_1e1a = new TChain("tree_rec_1e1a_source");
+        else if(type_of_sel=="tracker") tree_1e1a = new TChain("tree_rec_1e1a_tracker");
+        else cerr << "ERROR: wrong selection type given as input" << endl;
+
         tree_1e1a->Add(simul_name.str().data());
-        
         
         int n_geiger;
         double track_length, delta_t;
@@ -76,6 +74,10 @@ void BiPo(unsigned int n_ev, unsigned int n_ps, unsigned int n_day) {
         tree_1e1a->SetBranchAddress("ptd.reconstructed_1e1a_delta_t",&delta_t);
 
         Long64_t nentries = tree_1e1a->GetEntries();
+        cout <<nentries << endl;
+        efficiencies[i_file] = (double)nentries/(0.973*(double)(n_events));
+        cout <<(double)nentries/(0.973*(double)(n_events)) << endl;
+        
         for (Long64_t i=0;i<nentries;i++) {
             tree_1e1a->GetEntry(i);
             
@@ -102,20 +104,20 @@ void BiPo(unsigned int n_ev, unsigned int n_ps, unsigned int n_day) {
     
     
     TCanvas *c2 = new TCanvas("track_length_","track_length_",1961,344,700,502);
-    for(int i_file=0; i_file<n_files; i_file++) {
+    for(int i_file=first_file; i_file<n_files; i_file++) {
             
         h_track_length[i_file]->SetLineWidth(3);
         h_track_length[i_file]->SetLineColor(i_file+2);
 
-        if(i_file==0) h_track_length[i_file]->Draw();
+        if(i_file==first_file) h_track_length[i_file]->Draw();
         else h_track_length[i_file]->Draw("sames");
     }
 
 
     bool verbose(false);
     
-    TH1D *h_fitted_activities[3];
-    for(int i_file=0; i_file<n_files; i_file++) {
+    TH1D *h_fitted_activities[n_files];
+    for(int i_file=first_file; i_file<n_files; i_file++) {
 
         sprintf(name,"fitted_actvity_%s",simul_names[i_file]);
 
@@ -123,19 +125,20 @@ void BiPo(unsigned int n_ev, unsigned int n_ps, unsigned int n_day) {
     }
     
     RooMsgService::instance().setGlobalKillBelow(RooFit::ERROR);
-    
+    //gMinuit->SetPrintLevel(-1);
+
     RooWorkspace w("w");
     
     RooRealVar track_length_obs("track_length_obs","track_length_obs",0,500);
-    RooRealVar *fitted_activity[3];
+    RooRealVar *fitted_activity[n_files];
     
     RooDataHist datahist("datahist","datahist",track_length_obs, h_cumulative_track_length);
-    RooHistPdf pdf("pdf","pdf",track_length_obs,datahist,3);
+    RooHistPdf pdf("pdf","pdf",track_length_obs,datahist,poly_order);
     
-    RooDataHist *datahists[3];
-    RooHistPdf *pdfs[3];
+    RooDataHist *datahists[n_files];
+    RooHistPdf *pdfs[n_files];
     
-    for(int i_file=0; i_file<n_files; i_file++) {
+    for(int i_file=first_file; i_file<n_files; i_file++) {
         
         stringstream dh_name, pdf_name, var_name;
         dh_name << "data_hist_" << simul_names[i_file];
@@ -145,7 +148,7 @@ void BiPo(unsigned int n_ev, unsigned int n_ps, unsigned int n_day) {
         datahists[i_file] = new RooDataHist(dh_name.str().data(),dh_name.str().data(),
                                             track_length_obs, h_track_length[i_file]);
         pdfs[i_file] = new RooHistPdf(pdf_name.str().data(),pdf_name.str().data(),track_length_obs,
-                                      *datahists[i_file],3);
+                                      *datahists[i_file],poly_order);
         //fitted_activity[i_file] = new RooRealVar(var_name.str().data(),var_name.str().data(),activities[i_file]*given_exposure*0.,activities[i_file]*given_exposure*10.);
         fitted_activity[i_file] = new RooRealVar(var_name.str().data(),var_name.str().data(),(given_exposure*efficiencies[i_file])*fit_limits[i_file][0],(given_exposure*efficiencies[i_file])*fit_limits[i_file][1]);
         //fitted_activity[i_file] = new RooRealVar(var_name.str().data(),var_name.str().data(),activities[i_file]*(given_exposure*efficiencies[i_file]),"s-1");
@@ -162,7 +165,7 @@ void BiPo(unsigned int n_ev, unsigned int n_ps, unsigned int n_day) {
         data->SetName("data");
         model.fitTo(*data,PrintLevel(-1));
 
-        for(int i_file=0; i_file<n_files; i_file++) {
+        for(int i_file=first_file; i_file<n_files; i_file++) {
             
             h_fitted_activities[i_file]->Fill( fitted_activity[i_file]->getValV()/(given_exposure*efficiencies[i_file]) );
         }
@@ -186,9 +189,12 @@ void BiPo(unsigned int n_ev, unsigned int n_ps, unsigned int n_day) {
     
     //IMPORTANT: fitted_activity[0]->getValV() is equivalent to h_track_length[0]->Integral()*given_exposure
 
+    sprintf(name,"./fitted_ab_%s_sel.txt",type_of_sel.data());
+    ofstream f_ab (name,ios::app);
+    f_ab << days_of_exposure << " ";
         
-    TCanvas *c_fa[3];
-    for(int i_file=0;i_file<n_files;i_file++) {
+    TCanvas *c_fa[n_files];
+    for(int i_file=first_file;i_file<n_files;i_file++) {
         sprintf(name,"fitted_activity_%s",simul_names[i_file]);
         c_fa[i_file] = new TCanvas(name,name,1961,344,700,502);
 
@@ -205,7 +211,10 @@ void BiPo(unsigned int n_ev, unsigned int n_ps, unsigned int n_day) {
         cout << "GAUSSIAN MEAN: " << myfit->GetParameter(1) << endl;
         cout << "GAUSSIAN SIGMA: " << myfit->GetParameter(2) << endl;
         cout << "ACCURACY OF ACTIVITY MEASUREMENT AFTER " << days_of_exposure << " DAYS: " << (myfit->GetParameter(2)/myfit->GetParameter(1))*100. << "%" <<endl;
+        f_ab << (myfit->GetParameter(2)/myfit->GetParameter(1)) << " ";
     }
+    f_ab << endl;
+    f_ab.close();
 
     
     
