@@ -32,15 +32,15 @@ void ScriptsGenerator() {
     number_of_events[3] = int(((double)total_number_of_events)/(aw_fw_ratio+1.)) + 1;
     for(int ii=0;ii<4;ii++) number_of_events[ii] /= number_of_scripts;
 
-    cpu_per_event_simul[0] = 0.1; 
-    cpu_per_event_simul[1] = 0.115; 
-    cpu_per_event_simul[2] = 0.13; 
-    cpu_per_event_simul[3] = 0.19; 
+    cpu_per_event_simul[0] = 0.11; 
+    cpu_per_event_simul[1] = 0.12; 
+    cpu_per_event_simul[2] = 0.17; 
+    cpu_per_event_simul[3] = 0.18;
 
-    cpu_per_event_reco[0] = 0.1305;
-    cpu_per_event_reco[1] = 0.1505; 
+    cpu_per_event_reco[0] = 0.14;
+    cpu_per_event_reco[1] = 0.16; 
     cpu_per_event_reco[2] = 0.21; 
-    cpu_per_event_reco[3] = 0.4237;//not known yet 
+    cpu_per_event_reco[3] = 0.24;
 
     char name[128];
     char simul_names[4][64] = {"source_bulk","source_surface","tracker_aw","tracker_fw"};

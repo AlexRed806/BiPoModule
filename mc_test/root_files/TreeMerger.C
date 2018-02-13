@@ -12,22 +12,15 @@
 #include "TFile.h"
 #include "TTree.h"
 
+//void TreeMerger(unsigned int n_evt, unsigned int n_script) {
 void TreeMerger() {
    
     gROOT->SetStyle("Plain");
 
-    const unsigned int total_number_of_events = 200000;
-    const unsigned int number_of_scripts = 20;
+    const unsigned int total_number_of_events = 1000000;//n_evt;
+    const unsigned int number_of_scripts = 20;//n_script;
 
     const double aw_fw_ratio = 0.123344784871;
-
-    int number_of_events[4];
-
-    number_of_events[0] = total_number_of_events;
-    number_of_events[1] = total_number_of_events;
-    number_of_events[2] = int(((double)total_number_of_events*aw_fw_ratio)/(aw_fw_ratio+1.));
-    number_of_events[3] = int(((double)total_number_of_events)/(aw_fw_ratio+1.)) + 1;
-    for(int ii=0;ii<4;ii++) number_of_events[ii] /= number_of_scripts;
 
     char name[128];
     char simul_names[4][64] = {"source_bulk","source_surface","tracker_aw","tracker_fw"};
@@ -45,9 +38,6 @@ void TreeMerger() {
 	TFile *f = new TFile(name);
 	input_tree_source[i_script] = (TTree*)f->Get("tree_rec_1e1a_source");
 	input_tree_tracker[i_script] = (TTree*)f->Get("tree_rec_1e1a_tracker");
-	//TFile *root_file = new TFile(root_filename.c_str(), "READ");
-	
-	//f_config << "filename : string as path = \"$NEMO_PATH/analysis/mc_test/root_files/temp/BiPo_"<< simul_names[i_simul] <<"_"<< total_number_of_events <<"ev_"<< i_script <<".root";
 	
         list_source->Add(input_tree_source[i_script]);
         list_tracker->Add(input_tree_tracker[i_script]);
@@ -68,8 +58,8 @@ void TreeMerger() {
      
 
 
-    TFile *f1 = new TFile("BiPo_tracker_aw_200000ev_merged.root");
-    TFile *f2 = new TFile("BiPo_tracker_fw_200000ev_merged.root");
+    TFile *f1 = new TFile("BiPo_tracker_aw_1000000ev_merged.root");
+    TFile *f2 = new TFile("BiPo_tracker_fw_1000000ev_merged.root");
     TTree *t11 = (TTree*)f1->Get("tree_rec_1e1a_source");
     TTree *t12 = (TTree*)f1->Get("tree_rec_1e1a_tracker");
     TTree *t22 = (TTree*)f2->Get("tree_rec_1e1a_tracker");
@@ -80,8 +70,8 @@ void TreeMerger() {
     l1->Add(t21);
     l2->Add(t22);
     l2->Add(t12);
-    TFile *f100 = new TFile("BiPo_tracker_all_200000ev_merged.root","RECREATE");
-    root [16] f100->cd();
+    TFile *f100 = new TFile("BiPo_tracker_all_1000000ev_merged.root","RECREATE");
+    f100->cd();
     TTree *output_tree_source = TTree::MergeTrees(l1);
     TTree *output_tree_tracker = TTree::MergeTrees(l2);
     output_tree_source->SetName("tree_rec_1e1a_source");
