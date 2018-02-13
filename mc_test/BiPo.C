@@ -12,7 +12,7 @@
 #include "TFile.h"
 #include "TTree.h"
 
-void BiPo() {
+void BiPo(unsigned int n_ev, unsigned int n_ps, unsigned int n_day) {
 
     using namespace RooFit;
     using namespace RooStats;
@@ -22,16 +22,19 @@ void BiPo() {
     gStyle->SetOptStat(1111111);
     //gStyle->SetOptStat(0);
 
-    const int days_of_exposure = 7;
+    const int days_of_exposure = n_day;
     
     const unsigned int n_files = 3;
-    const int n_events = 200000;
+    const int n_events = n_ev;
 
     const double activities[n_files] = {0.0154,0.00018,0.0455};
     const double efficiencies[n_files] = {0.018342, 0.0866779, 0.0080547};
     //const double efficiencies[n_files] = {0.109888, 0.00555601, 0.0897256};
     const double given_exposure = 86400.*(double)days_of_exposure;
-    const int n_pseudo = 100000;
+    const int n_pseudo = n_ps;
+    
+    const double fit_limit_coeffs[2] = {0.,5.};
+    double fit_limits[n_files][2];
     
     double mc_exposures[n_files];
     for(int jj=0;jj<3;jj++) mc_exposures[jj] = (double)n_events / activities[jj];
@@ -49,9 +52,12 @@ void BiPo() {
     TH1D *h_pseudo_track_length = new TH1D("pseudo_track_length","pseudo_track_length",100,0,500);
 
     for(int i_file=0; i_file<n_files; i_file++) {
+        
+        fit_limits[i_file][0] = activities[i_file]*fit_limit_coeffs[0];
+        fit_limits[i_file][1] = activities[i_file]*fit_limit_coeffs[1];
     
         stringstream simul_name;
-        simul_name << "./root_files/BiPo_200000ev/BiPo_" << simul_names[i_file] << "_200000ev_merged.root";
+        simul_name << "./root_files/BiPo_"<<n_events<<"ev/BiPo_"<<simul_names[i_file]<<"_"<<n_events<<"ev_merged.root";
         cout << "Opening file " << simul_name.str() << endl;
  
         TFile *my_file = TFile::Open(simul_name.str().data());
@@ -113,10 +119,10 @@ void BiPo() {
 
         sprintf(name,"fitted_actvity_%s",simul_names[i_file]);
 
-        h_fitted_activities[i_file] = new TH1D(name,name,500,activities[i_file]*0.2,activities[i_file]*1.8);
+        h_fitted_activities[i_file] = new TH1D(name,name,(int)(n_pseudo/10),fit_limits[i_file][0],fit_limits[i_file][1]);
     }
     
-    RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
+    RooMsgService::instance().setGlobalKillBelow(RooFit::ERROR);
     
     RooWorkspace w("w");
     
@@ -141,7 +147,7 @@ void BiPo() {
         pdfs[i_file] = new RooHistPdf(pdf_name.str().data(),pdf_name.str().data(),track_length_obs,
                                       *datahists[i_file],3);
         //fitted_activity[i_file] = new RooRealVar(var_name.str().data(),var_name.str().data(),activities[i_file]*given_exposure*0.,activities[i_file]*given_exposure*10.);
-        fitted_activity[i_file] = new RooRealVar(var_name.str().data(),var_name.str().data(),activities[i_file]*0.1*(given_exposure*efficiencies[i_file]),activities[i_file]*10.*(given_exposure*efficiencies[i_file]));
+        fitted_activity[i_file] = new RooRealVar(var_name.str().data(),var_name.str().data(),(given_exposure*efficiencies[i_file])*fit_limits[i_file][0],(given_exposure*efficiencies[i_file])*fit_limits[i_file][1]);
         //fitted_activity[i_file] = new RooRealVar(var_name.str().data(),var_name.str().data(),activities[i_file]*(given_exposure*efficiencies[i_file]),"s-1");
         fitted_activity[i_file]->setVal(activities[i_file]*(given_exposure*efficiencies[i_file]));
 
@@ -191,7 +197,10 @@ void BiPo() {
         h_fitted_activities[i_file]->Draw();
 
         TF1 *myfit = new TF1("myfit","gaus");
-        h_fitted_activities[i_file]->Fit(myfit);
+
+        h_fitted_activities[i_file]->Fit(myfit,"","",
+                                         h_fitted_activities[i_file]->GetBinCenter(std::max((int)(n_pseudo/200),1)),
+                                         h_fitted_activities[i_file]->GetBinCenter(h_fitted_activities[i_file]->GetNbinsX()+1));
         cout << "FITTED HISTOGRAM OF MOCK-DATA ACTIVITIES WITH GAUSSIAN FUNCTION" << endl;
         cout << "GAUSSIAN MEAN: " << myfit->GetParameter(1) << endl;
         cout << "GAUSSIAN SIGMA: " << myfit->GetParameter(2) << endl;
