@@ -19,35 +19,48 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
     
     gROOT->SetStyle("Plain");
     gStyle->SetOptFit(1111);
-    gStyle->SetOptStat(1111111);
-    //gStyle->SetOptStat(0);
+    //gStyle->SetOptStat(1111111);
+    gStyle->SetOptStat(0);
     
+    gStyle->SetLegendTextSize(.03);
+    gStyle->SetLabelFont(42,"XY");
+    gStyle->SetLegendFont(132);
+    gStyle->SetLegendBorderSize(0);
+    gStyle->SetStatFont(42);
+    gStyle->SetTitleFont(132,"XY");
+
+    const bool verbose = false;
     const unsigned int n_files = 3;
     const unsigned int first_file = 0;
+    const unsigned int step = 2;
     const unsigned int poly_order = 3;
+    const double n_bin_coeff = 10.;
+    
     const double activities[n_files] = {0.0154,0.00018,0.0455};
     const double given_exposure = 86400.*(double)days_of_exposure;
-    const double fit_limit_coeffs[2] = {0.,5.};
+    const double fit_limit_coeffs[2] = {-10.,50.};
     
     double efficiencies[n_files];
     double fit_limits[n_files][2];
     
     double mc_exposures[n_files];
-    for(int jj=first_file;jj<n_files;jj++) mc_exposures[jj] = (double)n_events / activities[jj];
+    for(int jj=first_file;jj<n_files;jj+=step) mc_exposures[jj] = (double)n_events / activities[jj];
     
-    char name[56];
-    char simul_names[n_files][54] = {"source_bulk","source_surface","tracker_all"};
+    char name[64], explicit_name[128];
+    char simul_names[n_files][32] = {"source_bulk","source_surface","tracker_all"};
+    char simul_explicit_names[n_files][64] = {"^{214}Bi-Po events in source bulk","^{214}Bi-Po events on source surface","^{214}Bi-Po events on tracker wires surface"};
+    char pdf_explicit_names[n_files][64] = {"fitted PDF of source bulk ^{214}Bi-Po","fitted PDF of source suface ^{214}Bi-Po","fitted PDF of tracker ^{214}Bi-Po"};
 
     TH1D *h_track_length[n_files];
-    for(int i_file=first_file; i_file<n_files; i_file++) {
+    for(int i_file=first_file; i_file<n_files; i_file+=step) {
         sprintf(name,"track_length_%s",simul_names[i_file]);
-        h_track_length[i_file] = new TH1D(name,name,100,0,500);
+        h_track_length[i_file] = new TH1D(name,simul_explicit_names[i_file],100,0,500);
     }
-    TH1D *h_cumulative_track_length = new TH1D("cumulative_track_length","cumulative_track_length",100,0,500);
+    TH1D *h_cumulative_track_length = new TH1D("cumulative_track_length","^{214}Bi-Po events - combined vertexes",100,0,500);
 
     TH1D *h_pseudo_track_length = new TH1D("pseudo_track_length","pseudo_track_length",100,0,500);
 
-    for(int i_file=first_file; i_file<n_files; i_file++) {
+    for(int i_file=first_file; i_file<n_files; i_file+=step) {
         
         fit_limits[i_file][0] = activities[i_file]*fit_limit_coeffs[0];
         fit_limits[i_file][1] = activities[i_file]*fit_limit_coeffs[1];
@@ -74,10 +87,10 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
         tree_1e1a->SetBranchAddress("ptd.reconstructed_1e1a_delta_t",&delta_t);
 
         Long64_t nentries = tree_1e1a->GetEntries();
-        cout <<nentries << endl;
-        efficiencies[i_file] = (double)nentries/(0.973*(double)(n_events));
-        cout <<(double)nentries/(0.973*(double)(n_events)) << endl;
         
+        efficiencies[i_file] = (double)nentries/(0.973*(double)(n_events));
+        cout << efficiencies[i_file] << endl;
+
         for (Long64_t i=0;i<nentries;i++) {
             tree_1e1a->GetEntry(i);
             
@@ -92,40 +105,43 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
 
     
     TCanvas *c = new TCanvas("track_length","track_length",1961,344,700,502);
-    
-    h_cumulative_track_length->SetTitle("");
-    h_cumulative_track_length->GetYaxis()->SetTitle("");
+    TLegend *l = new TLegend(0.45,0.7,0.89,0.89);
+
     h_cumulative_track_length->GetXaxis()->SetTitle("#alpha track leength (mm)");
-
-    h_cumulative_track_length->SetLineWidth(3);
+    h_cumulative_track_length->GetYaxis()->SetTitle("(s^{-1})");
+    h_cumulative_track_length->SetLineWidth(2);
     h_cumulative_track_length->SetLineColor(1);
-        
-    h_cumulative_track_length->Draw();
+    h_cumulative_track_length->SetFillStyle(0);
+    h_cumulative_track_length->Draw("hist");
     
+    l->AddEntry(h_cumulative_track_length,h_cumulative_track_length->GetTitle(),"lep");
+    h_cumulative_track_length->SetTitle("");
     
-    TCanvas *c2 = new TCanvas("track_length_","track_length_",1961,344,700,502);
-    for(int i_file=first_file; i_file<n_files; i_file++) {
+    for(int i_file=first_file; i_file<n_files; i_file+=step) {
             
-        h_track_length[i_file]->SetLineWidth(3);
+        h_track_length[i_file]->SetLineWidth(2);
         h_track_length[i_file]->SetLineColor(i_file+2);
-
-        if(i_file==first_file) h_track_length[i_file]->Draw();
-        else h_track_length[i_file]->Draw("sames");
+        h_track_length[i_file]->SetFillColor(i_file+2);
+        h_track_length[i_file]->SetFillStyle(3003);
+        h_track_length[i_file]->Draw("histsames");
+        
+        l->AddEntry(h_track_length[i_file],h_track_length[i_file]->GetTitle(),"lep");
+        h_track_length[i_file]->SetTitle("");
     }
-
-
-    bool verbose(false);
+    if(step == 1) h_track_length[1]->Draw("histsames");
+    l->Draw();
+    
     
     TH1D *h_fitted_activities[n_files];
-    for(int i_file=first_file; i_file<n_files; i_file++) {
+    for(int i_file=first_file; i_file<n_files; i_file+=step) {
 
         sprintf(name,"fitted_actvity_%s",simul_names[i_file]);
 
-        h_fitted_activities[i_file] = new TH1D(name,name,(int)(n_pseudo/10),fit_limits[i_file][0],fit_limits[i_file][1]);
+        h_fitted_activities[i_file] = new TH1D(name,name,(int)(n_pseudo*n_bin_coeff),fit_limits[i_file][0],fit_limits[i_file][1]);
     }
     
     RooMsgService::instance().setGlobalKillBelow(RooFit::ERROR);
-    //gMinuit->SetPrintLevel(-1);
+    RooMsgService::instance().setSilentMode(1);
 
     RooWorkspace w("w");
     
@@ -138,7 +154,7 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
     RooDataHist *datahists[n_files];
     RooHistPdf *pdfs[n_files];
     
-    for(int i_file=first_file; i_file<n_files; i_file++) {
+    for(int i_file=first_file; i_file<n_files; i_file+=step) {
         
         stringstream dh_name, pdf_name, var_name;
         dh_name << "data_hist_" << simul_names[i_file];
@@ -155,8 +171,9 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
         fitted_activity[i_file]->setVal(activities[i_file]*(given_exposure*efficiencies[i_file]));
 
     }
-    
-    RooAddPdf model("model","model",RooArgSet(*pdfs[0],*pdfs[1],*pdfs[2]),RooArgList(*fitted_activity[0],*fitted_activity[1],*fitted_activity[2]));
+
+    //RooAddPdf model("model","model",RooArgSet(*pdfs[0],*pdfs[1],*pdfs[2]),RooArgList(*fitted_activity[0],*fitted_activity[1],*fitted_activity[2]));
+    RooAddPdf model("model","model",RooArgSet(*pdfs[0],*pdfs[2]),RooArgList(*fitted_activity[0],*fitted_activity[2]));
 
     for(int i_pseudo=0;i_pseudo<n_pseudo;i_pseudo++) {
         
@@ -165,28 +182,77 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
         data->SetName("data");
         model.fitTo(*data,PrintLevel(-1));
 
-        for(int i_file=first_file; i_file<n_files; i_file++) {
+        for(int i_file=first_file; i_file<n_files; i_file+=step) {
             
             h_fitted_activities[i_file]->Fill( fitted_activity[i_file]->getValV()/(given_exposure*efficiencies[i_file]) );
         }
-        
+
         if(verbose) {
         
-            TCanvas *c1 = new TCanvas("track_length_pseudo","track_length_pseudo",1961,344,700,502);
-        
+            TCanvas *c_mock = new TCanvas("cacca","puzza",1961,344,700,502);
+            TLegend *l_mock = new TLegend(0.5,0.65,0.89,0.89);
+            
+            //h_cumulative_track_length->SetTitle("");
+            TH1 *h_cumulative_track_length_data = data->createHistogram("track_length_obs",100);
+            h_cumulative_track_length_data->GetXaxis()->SetTitle("#alpha track leength (mm)");
+            h_cumulative_track_length_data->GetYaxis()->SetTitle("(s^{-1})");
+            h_cumulative_track_length_data->SetLineWidth(2);
+            h_cumulative_track_length_data->SetLineColor(1);
+            h_cumulative_track_length_data->SetFillStyle(0);
+            h_cumulative_track_length_data->Draw();
+            h_cumulative_track_length_data->SetTitle("mock data (30 days exposure)");
+            l_mock->AddEntry(h_cumulative_track_length_data,h_cumulative_track_length_data->GetTitle(),"lep");
+            h_cumulative_track_length_data->SetTitle("");
+
+            TH1 *h_cumulative_track_length_mock = model.createHistogram("track_length_obs",100);
+            h_cumulative_track_length_mock->GetXaxis()->SetTitle("#alpha track leength (mm)");
+            h_cumulative_track_length_mock->GetYaxis()->SetTitle("(s^{-1})");
+            //h_cumulative_track_length_mock->Scale(fitted_activity[0]->getValV()+fitted_activity[1]->getValV()+fitted_activity[2]->getValV());
+            h_cumulative_track_length_mock->Scale(5);
+            h_cumulative_track_length_mock->SetLineWidth(2);
+            h_cumulative_track_length_mock->SetLineColor(16);
+            h_cumulative_track_length_mock->SetFillColor(16);
+            h_cumulative_track_length_mock->SetFillStyle(3003);
+            h_cumulative_track_length_mock->Draw("histsames");
+            h_cumulative_track_length_mock->SetTitle("global PDF fitted to mock data");
+            l_mock->AddEntry(h_cumulative_track_length_mock,h_cumulative_track_length_mock->GetTitle(),"l");
+            h_cumulative_track_length_mock->SetTitle("");
+
+            TH1 *h_track_length_mock[n_files];
+            
+            for(int i_file=first_file; i_file<n_files; i_file+=step) {
+
+                h_track_length_mock[i_file] = pdfs[i_file]->createHistogram("track_length_obs",100);
+                h_track_length_mock[i_file]->Scale(fitted_activity[i_file]->getValV());
+                h_track_length_mock[i_file]->SetLineWidth(2);
+                h_track_length_mock[i_file]->SetLineColor(i_file+2);
+                h_track_length_mock[i_file]->SetFillColor(i_file+2);
+                h_track_length_mock[i_file]->SetFillStyle(3003);
+                h_track_length_mock[i_file]->Draw("histsames");
+                h_track_length_mock[i_file]->SetTitle(pdf_explicit_names[i_file]);
+                l_mock->AddEntry(h_track_length_mock[i_file],h_track_length_mock[i_file]->GetTitle(),"l");
+                h_track_length_mock[i_file]->SetTitle("");
+            }
+            if(step == 1) h_track_length_mock[1]->Draw("histsames");
+            l_mock->Draw();
+            
+            TCanvas *c_mock1 = new TCanvas("track_length_pseudo","track_length_pseudo",1961,344,700,502);
         
             RooPlot * pl = track_length_obs.frame(Title("pseudo track length distribution"));
             data->plotOn(pl);
             model.plotOn(pl);
+            //pdfs[0]->plotOn(pl);
+            //h_fitted_activities[0]->plotOn(pl);
             pl->SetTitle("");
             pl->Draw();
 
-            cout << activities[0]*(given_exposure*efficiencies[0]) <<" "<< fitted_activity[0]->getValV() << endl;
-            cout << activities[1]*(given_exposure*efficiencies[1]) <<" "<< fitted_activity[1]->getValV() << endl;
-            cout << activities[2]*(given_exposure*efficiencies[2]) <<" "<< fitted_activity[2]->getValV() << endl;
+            for(int i_file=first_file; i_file<n_files; i_file+=step) {
+                cout << activities[i_file]*(given_exposure*efficiencies[i_file])
+                    <<" "<< fitted_activity[i_file]->getValV() << endl;
+            }
         }
     }
-    
+
     //IMPORTANT: fitted_activity[0]->getValV() is equivalent to h_track_length[0]->Integral()*given_exposure
 
     sprintf(name,"./fitted_ab_%s_sel.txt",type_of_sel.data());
@@ -194,7 +260,7 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
     f_ab << days_of_exposure << " ";
         
     TCanvas *c_fa[n_files];
-    for(int i_file=first_file;i_file<n_files;i_file++) {
+    for(int i_file=first_file;i_file<n_files;i_file+=step) {
         sprintf(name,"fitted_activity_%s",simul_names[i_file]);
         c_fa[i_file] = new TCanvas(name,name,1961,344,700,502);
 
@@ -215,7 +281,6 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
     }
     f_ab << endl;
     f_ab.close();
-
     
     
 }
