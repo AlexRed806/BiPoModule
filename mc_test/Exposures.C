@@ -45,9 +45,9 @@ void Exposures() {
     if(myfile.is_open()) {
         while ( myfile.good() && nn < n_data) {
             myfile >> n_days[nn] >> precision[0][nn] >> precision[1][nn] >> precision[2][nn];
-            //precision[0][nn]*=100;
-            //precision[1][nn]*=100;
-            //precision[2][nn]*=100;
+            precision[0][nn]*=100;
+            precision[1][nn]*=100;
+            precision[2][nn]*=100;
             std::cout << n_days[nn] <<" "<< precision[0][nn] <<" "<< precision[1][nn] <<" "<< precision[2][nn] << std::endl;
             nn++;
         }

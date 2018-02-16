@@ -29,10 +29,10 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
     gStyle->SetStatFont(42);
     gStyle->SetTitleFont(132,"XY");
 
-    const bool verbose = false;
+    const bool verbose = true;
     const unsigned int n_files = 3;
     const unsigned int first_file = 0;
-    const unsigned int step = 2;
+    const unsigned int step = 1;
     const unsigned int poly_order = 3;
     const double n_bin_coeff = 10.;
     
@@ -107,7 +107,7 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
     TCanvas *c = new TCanvas("track_length","track_length",1961,344,700,502);
     TLegend *l = new TLegend(0.45,0.7,0.89,0.89);
 
-    h_cumulative_track_length->GetXaxis()->SetTitle("#alpha track leength (mm)");
+    h_cumulative_track_length->GetXaxis()->SetTitle("#alpha track length (mm)");
     h_cumulative_track_length->GetYaxis()->SetTitle("(s^{-1})");
     h_cumulative_track_length->SetLineWidth(2);
     h_cumulative_track_length->SetLineColor(1);
@@ -172,8 +172,8 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
 
     }
 
-    //RooAddPdf model("model","model",RooArgSet(*pdfs[0],*pdfs[1],*pdfs[2]),RooArgList(*fitted_activity[0],*fitted_activity[1],*fitted_activity[2]));
-    RooAddPdf model("model","model",RooArgSet(*pdfs[0],*pdfs[2]),RooArgList(*fitted_activity[0],*fitted_activity[2]));
+    RooAddPdf model("model","model",RooArgSet(*pdfs[0],*pdfs[1],*pdfs[2]),RooArgList(*fitted_activity[0],*fitted_activity[1],*fitted_activity[2]));
+    //RooAddPdf model("model","model",RooArgSet(*pdfs[0],*pdfs[2]),RooArgList(*fitted_activity[0],*fitted_activity[2]));
 
     for(int i_pseudo=0;i_pseudo<n_pseudo;i_pseudo++) {
         
@@ -194,8 +194,8 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
             
             //h_cumulative_track_length->SetTitle("");
             TH1 *h_cumulative_track_length_data = data->createHistogram("track_length_obs",100);
-            h_cumulative_track_length_data->GetXaxis()->SetTitle("#alpha track leength (mm)");
-            h_cumulative_track_length_data->GetYaxis()->SetTitle("(s^{-1})");
+            h_cumulative_track_length_data->GetXaxis()->SetTitle("#alpha track length (mm)");
+            //h_cumulative_track_length_data->GetYaxis()->SetTitle("(s^{-1})");
             h_cumulative_track_length_data->SetLineWidth(2);
             h_cumulative_track_length_data->SetLineColor(1);
             h_cumulative_track_length_data->SetFillStyle(0);
@@ -205,8 +205,8 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
             h_cumulative_track_length_data->SetTitle("");
 
             TH1 *h_cumulative_track_length_mock = model.createHistogram("track_length_obs",100);
-            h_cumulative_track_length_mock->GetXaxis()->SetTitle("#alpha track leength (mm)");
-            h_cumulative_track_length_mock->GetYaxis()->SetTitle("(s^{-1})");
+            //h_cumulative_track_length_mock->GetXaxis()->SetTitle("#alpha track length (mm)");
+            //h_cumulative_track_length_mock->GetYaxis()->SetTitle("(s^{-1})");
             //h_cumulative_track_length_mock->Scale(fitted_activity[0]->getValV()+fitted_activity[1]->getValV()+fitted_activity[2]->getValV());
             h_cumulative_track_length_mock->Scale(5);
             h_cumulative_track_length_mock->SetLineWidth(2);

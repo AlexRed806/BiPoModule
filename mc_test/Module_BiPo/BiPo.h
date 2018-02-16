@@ -25,16 +25,20 @@ struct root_variables_particles {
   double kinetic_energy;
   double total_energy;
   double emission_time;
+  std::vector<double> vertex;
   //PTD variables
   int n_geiger_hits;
   double track_length;
   double fitted_time;
   double delta_t_true_fit;
+  double calo_energy;
 };
 struct root_variables_topologies {
   //int n_particles;
   //bool has_prompt;
   //bool has_delayed;
+  double electron_calo_energy;
+  std::vector<double> electron_vertex;
   double alpha_track_length;
   int alpha_n_geiger_hits;
   double delta_t_prompt_delayed;
@@ -48,6 +52,7 @@ struct particle {
     int charge; //-1, 0, +1
     double track_length;
     unsigned int number_of_geiger_hits;
+    double calo_energy;
     bool does_hit_main_calo; //to be removed
     bool does_hit_x_calo; //to be removed
     bool does_hit_gamma_veto; //to be removed
@@ -61,12 +66,13 @@ struct particle {
     bool is_electron_tracker_sel;
     bool is_alpha_tracker_sel;
     
-    particle(): trajectory_pattern("none"), reconstructed_time(pow(-1,0.5)), is_delayed(0), charge(pow(-1,0.5)), track_length(pow(-1,0.5)), number_of_geiger_hits(pow(-1,0.5)), does_hit_main_calo(0), does_hit_x_calo(0), does_hit_gamma_veto(0), does_hit_source_foil(0), is_electron_source_sel(0), is_alpha_source_sel(0), is_electron_tracker_sel(0), is_alpha_tracker_sel(0) {}
+    particle(): trajectory_pattern("none"), reconstructed_time(pow(-1,0.5)), is_delayed(0), charge(pow(-1,0.5)), track_length(pow(-1,0.5)), number_of_geiger_hits(pow(-1,0.5)), calo_energy(pow(-1,0.5)), does_hit_main_calo(0), does_hit_x_calo(0), does_hit_gamma_veto(0), does_hit_source_foil(0), is_electron_source_sel(0), is_alpha_source_sel(0), is_electron_tracker_sel(0), is_alpha_tracker_sel(0) {}
 };
 struct mc_particle {
     std::string type;
     double emission_time;
     double kinetic_energy;
+    std::vector<double> vertex;
 };
 struct event {
     unsigned int number_of_electrons;

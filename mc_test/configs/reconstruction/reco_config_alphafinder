@@ -6,7 +6,7 @@
 # #@description Reconstruction version (automatic: extracted from input metadata)
 # experimentalSetupUrn : string = "urn:snemo:demonstrator:setup:1.0"
 #@description Number of events to reconstruct (default: 0 = no limit)
-numberOfEvents : integer = 10000
+numberOfEvents : integer = 50000
 
 
 [name="flreconstruct.plugins" type="flreconstruct::section"]

@@ -53,24 +53,28 @@ void BiPo::initialize(const datatools::properties & setup_,
     _root_tree_simulated_electrons_->Branch("sd.primary_electrons_kinetic_energy", &_root_variables_simulated_particles_.kinetic_energy);
     _root_tree_simulated_electrons_->Branch("sd.primary_electrons_total_energy", &_root_variables_simulated_particles_.total_energy);
     _root_tree_simulated_electrons_->Branch("sd.primary_electrons_time", &_root_variables_simulated_particles_.emission_time);
+    _root_tree_simulated_electrons_->Branch("sd.primary_electrons_vertex", &_root_variables_simulated_particles_.vertex);
 
     _root_tree_simulated_alphas_ = new TTree("tree_mc_alpha", "tree_mc_alpha");
     _root_tree_simulated_alphas_->SetDirectory(_root_file_);
     _root_tree_simulated_alphas_->Branch("sd.primary_alphas_kinetic_energy", &_root_variables_simulated_particles_.kinetic_energy);
     _root_tree_simulated_alphas_->Branch("sd.primary_alphas_total_energy", &_root_variables_simulated_particles_.total_energy);
     _root_tree_simulated_alphas_->Branch("sd.primary_alphas_time", &_root_variables_simulated_particles_.emission_time);
-    
+    _root_tree_simulated_alphas_->Branch("sd.primary_alphas_vertex", &_root_variables_simulated_particles_.vertex);
+
     // root trees with ptd reconstructed particles information
     
     _root_tree_reconstructed_electrons_source_sel_ = new TTree("tree_rec_elec_source", "tree_rec_elec_source");
     _root_tree_reconstructed_electrons_source_sel_->SetDirectory(_root_file_);
     _root_tree_reconstructed_electrons_source_sel_->Branch("ptd.reconstructed_electrons_n_geiger_hits", &_root_variables_reconstructed_particles_.n_geiger_hits);
     _root_tree_reconstructed_electrons_source_sel_->Branch("ptd.reconstructed_electrons_track_length", &_root_variables_reconstructed_particles_.track_length);
-    
+    _root_tree_reconstructed_electrons_source_sel_->Branch("ptd.reconstructed_electrons_calo_energy", &_root_variables_reconstructed_particles_.calo_energy);
+
     _root_tree_reconstructed_electrons_tracker_sel_ = new TTree("tree_rec_elec_tracker", "tree_rec_elec_tracker");
     _root_tree_reconstructed_electrons_tracker_sel_->SetDirectory(_root_file_);
     _root_tree_reconstructed_electrons_tracker_sel_->Branch("ptd.reconstructed_electrons_n_geiger_hits", &_root_variables_reconstructed_particles_.n_geiger_hits);
     _root_tree_reconstructed_electrons_tracker_sel_->Branch("ptd.reconstructed_electrons_track_length", &_root_variables_reconstructed_particles_.track_length);
+    _root_tree_reconstructed_electrons_tracker_sel_->Branch("ptd.reconstructed_electrons_calo_energy", &_root_variables_reconstructed_particles_.calo_energy);
     
     _root_tree_reconstructed_alphas_source_sel_ = new TTree("tree_rec_alpha_source", "tree_rec_alpha_source");
     _root_tree_reconstructed_alphas_source_sel_->SetDirectory(_root_file_);
@@ -91,12 +95,17 @@ void BiPo::initialize(const datatools::properties & setup_,
     
     _root_tree_reconstructed_1e1a_topology_source_sel_ = new TTree("tree_rec_1e1a_source", "tree_rec_1e1a_source");
     _root_tree_reconstructed_1e1a_topology_source_sel_->SetDirectory(_root_file_);
+    _root_tree_reconstructed_1e1a_topology_source_sel_->Branch("sd.primary_electrons_vertex", &_root_variables_topologies_.electron_vertex);
+    _root_tree_reconstructed_1e1a_topology_source_sel_->Branch("ptd.reconstructed_electrons_calo_energy", &_root_variables_topologies_.electron_calo_energy);
     _root_tree_reconstructed_1e1a_topology_source_sel_->Branch("ptd.reconstructed_alphas_track_length", &_root_variables_topologies_.alpha_track_length);
-    _root_tree_reconstructed_1e1a_topology_source_sel_->Branch("ptd.reconstructed_alphas_n_geiger_hits", &_root_variables_reconstructed_particles_.n_geiger_hits);
+    //_root_tree_reconstructed_1e1a_topology_source_sel_->Branch("ptd.reconstructed_alphas_n_geiger_hits", &_root_variables_reconstructed_particles_.n_geiger_hits);
+    _root_tree_reconstructed_1e1a_topology_source_sel_->Branch("ptd.reconstructed_alphas_n_geiger_hits", &_root_variables_topologies_.alpha_n_geiger_hits);
     _root_tree_reconstructed_1e1a_topology_source_sel_->Branch("ptd.reconstructed_1e1a_delta_t", &_root_variables_topologies_.delta_t_prompt_delayed);
     
     _root_tree_reconstructed_1e1a_topology_tracker_sel_ = new TTree("tree_rec_1e1a_tracker", "tree_rec_1e1a_tracker");
     _root_tree_reconstructed_1e1a_topology_tracker_sel_->SetDirectory(_root_file_);
+    _root_tree_reconstructed_1e1a_topology_tracker_sel_->Branch("sd.primary_electrons_vertex", &_root_variables_topologies_.electron_vertex);
+    _root_tree_reconstructed_1e1a_topology_tracker_sel_->Branch("ptd.reconstructed_electrons_calo_energy", &_root_variables_topologies_.electron_calo_energy);
     _root_tree_reconstructed_1e1a_topology_tracker_sel_->Branch("ptd.reconstructed_alphas_track_length", &_root_variables_topologies_.alpha_track_length);
     _root_tree_reconstructed_1e1a_topology_tracker_sel_->Branch("ptd.reconstructed_alphas_n_geiger_hits", &_root_variables_topologies_.alpha_n_geiger_hits);
     _root_tree_reconstructed_1e1a_topology_tracker_sel_->Branch("ptd.reconstructed_1e1a_delta_t", &_root_variables_topologies_.delta_t_prompt_delayed);
@@ -145,9 +154,12 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
     if (!record_.has("SD"))
         return PROCESS_CONTINUE;
     
+    
     /// initialize the SD bank
     
     const mctools::simulated_data & my_sd = record_.get<mctools::simulated_data>("SD");
+
+    geomtools::vector_3d my_vec = my_sd.get_vertex();
     
     const mctools::simulated_data::primary_event_type my_primary_event = my_sd.get_primary_event();
     
@@ -160,6 +172,10 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
         
         mc_particle _mc_particle_;
         
+        _mc_particle_.vertex.push_back(my_vec.x());
+        _mc_particle_.vertex.push_back(my_vec.y());
+        _mc_particle_.vertex.push_back(my_vec.z());
+        
         my_primary_particle[i_particle] = my_primary_event.get_particle(i_particle);
         
         _mc_particle_.kinetic_energy = my_primary_particle[i_particle].get_kinetic_energy();
@@ -168,7 +184,9 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
         _root_variables_simulated_particles_.kinetic_energy = my_primary_particle[i_particle].get_kinetic_energy();
         _root_variables_simulated_particles_.total_energy = my_primary_particle[i_particle].get_total_energy();
         _root_variables_simulated_particles_.emission_time = my_primary_particle[i_particle].get_time()/1000.;
+        _root_variables_simulated_particles_.vertex = _mc_particle_.vertex;
 
+        
         if(my_primary_particle[i_particle].is_electron()) {
             
             _mc_particle_.type = "electron";
@@ -279,13 +297,21 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
             
             double temp = my_tj.get_auxiliaries().fetch_real_scalar("t0");
             
+            double t0;
+            if (my_tj.get_auxiliaries().has_key("t0")) {
+                t0 = my_tj.get_auxiliaries().fetch_real("t0");
+                //std::cout << "t0 = " << t0/CLHEP::s << " seconds" << std::endl;
+                //std::cout << "t0 = " << t0/CLHEP::ns << " ns" << std::endl;
+            }
+            
+            
             if(temp > 2500.) temp /= 1000.; // THERE IS A BIG PROBLEM WITH UNITS HERE!!!
             
             // if alpha finder has done the fit, the fitted time is not good
             if(my_tj.get_cluster().get_number_of_hits() < 3) temp = pow(-1,0.5);
             
-            _particle_.reconstructed_time = temp;
-            _root_variables_reconstructed_particles_.fitted_time = temp;
+            _particle_.reconstructed_time = t0/CLHEP::ns;
+            _root_variables_reconstructed_particles_.fitted_time = t0/CLHEP::ns;
 
         }
         else {n_wierdos++;}
@@ -316,6 +342,22 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
         } /// end loop over vertices ///
 
         
+        /// after vertices loop, if there is a calo vertex find the associated energy
+        if(_particle_.does_hit_main_calo  ||  _particle_.does_hit_x_calo || _particle_.does_hit_gamma_veto) {
+            
+            _particle_.calo_energy = 0;
+            
+            const snemo::datamodel::calibrated_calorimeter_hit::collection_type & my_calo_hits = my_pt.get_associated_calorimeter_hits();
+            
+            for (const auto & ich : my_calo_hits) {
+            
+                _particle_.calo_energy += ich.get().get_energy();
+            }
+        }
+        _root_variables_reconstructed_particles_.calo_energy = _particle_.calo_energy;
+        /// end of study calo hits ///
+        
+        
         /// and finally, check associated cluster ///
 
         if(my_tj.has_cluster()) {
@@ -327,7 +369,7 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
             if(my_cl.is_delayed()) _particle_.is_delayed = true;
             else _particle_.is_delayed = false;
 
-          _root_variables_reconstructed_particles_.n_geiger_hits = my_cl.get_number_of_hits();
+          _root_variables_reconstructed_particles_.n_geiger_hits = _particle_.number_of_geiger_hits;
         }
         else std::cout << "Trajectory without cluster?!?" << std::endl;
         /// end of study trajectory ///
@@ -419,8 +461,18 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
                 _root_variables_topologies_.alpha_n_geiger_hits = (*it).number_of_geiger_hits;
                 _event_.delayed_time = (*it).reconstructed_time;
             }
-            else _event_.prompt_time = (*it).reconstructed_time;
-        
+            else {
+             
+                _root_variables_topologies_.electron_calo_energy = (*it).calo_energy;
+                _event_.prompt_time = (*it).reconstructed_time;
+            }
+        }
+        for(std::vector<mc_particle>::iterator it = _event_.event_mc_particles.begin(); it != _event_.event_mc_particles.end(); ++it) {
+            
+            if( (*it).type == "electron" ) {
+                
+                _root_variables_topologies_.electron_vertex = (*it).vertex;
+            }
         }
         
         _root_variables_topologies_.delta_t_prompt_delayed = _event_.delayed_time - _event_.prompt_time;
@@ -441,8 +493,18 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
                 _root_variables_topologies_.alpha_n_geiger_hits = (*it).number_of_geiger_hits;
                 _event_.delayed_time = (*it).reconstructed_time;
             }
-            else _event_.prompt_time = (*it).reconstructed_time;
-            
+            else {
+                
+                _root_variables_topologies_.electron_calo_energy = (*it).calo_energy;
+                _event_.prompt_time = (*it).reconstructed_time;
+            }
+        }
+        for(std::vector<mc_particle>::iterator it = _event_.event_mc_particles.begin(); it != _event_.event_mc_particles.end(); ++it) {
+
+            if( (*it).type == "electron" ) {
+             
+                _root_variables_topologies_.electron_vertex = (*it).vertex;
+            }
         }
         
         _root_variables_topologies_.delta_t_prompt_delayed = _event_.delayed_time - _event_.prompt_time;
