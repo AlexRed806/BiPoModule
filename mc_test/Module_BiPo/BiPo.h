@@ -34,6 +34,7 @@ struct root_variables_particles {
   double calo_energy;
 };
 struct root_variables_topologies {
+  unsigned int event_id;
   //int n_particles;
   //bool has_prompt;
   //bool has_delayed;
@@ -75,6 +76,7 @@ struct mc_particle {
     std::vector<double> vertex;
 };
 struct event {
+    static unsigned int event_id;
     unsigned int number_of_electrons;
     unsigned int number_of_alphas;
     unsigned int number_of_gammas;
@@ -82,7 +84,9 @@ struct event {
     std::vector<particle> event_particles;
     double prompt_time, delayed_time;
     
-    event(): number_of_electrons(0), number_of_alphas(0), number_of_gammas(0), prompt_time(pow(-1,0.5)), delayed_time(pow(-1,0.5)) {}
+    event(): number_of_electrons(0), number_of_alphas(0), number_of_gammas(0), prompt_time(pow(-1,0.5)), delayed_time(pow(-1,0.5)) {
+        event_id++;
+    }
 };
 
 struct simulation {
@@ -122,7 +126,7 @@ private:
     TTree * _root_tree_fitted_alphas_;
     TTree * _root_tree_reconstructed_1e1a_topology_source_sel_;
     TTree * _root_tree_reconstructed_1e1a_topology_tracker_sel_;
-
+    
     root_variables_particles _root_variables_simulated_particles_;
     root_variables_particles _root_variables_reconstructed_particles_;
     

@@ -95,6 +95,7 @@ void BiPo::initialize(const datatools::properties & setup_,
     
     _root_tree_reconstructed_1e1a_topology_source_sel_ = new TTree("tree_rec_1e1a_source", "tree_rec_1e1a_source");
     _root_tree_reconstructed_1e1a_topology_source_sel_->SetDirectory(_root_file_);
+    _root_tree_reconstructed_1e1a_topology_source_sel_->Branch("event_id", &_root_variables_topologies_.event_id);
     _root_tree_reconstructed_1e1a_topology_source_sel_->Branch("sd.primary_electrons_vertex", &_root_variables_topologies_.electron_vertex);
     _root_tree_reconstructed_1e1a_topology_source_sel_->Branch("ptd.reconstructed_electrons_calo_energy", &_root_variables_topologies_.electron_calo_energy);
     _root_tree_reconstructed_1e1a_topology_source_sel_->Branch("ptd.reconstructed_alphas_track_length", &_root_variables_topologies_.alpha_track_length);
@@ -104,6 +105,7 @@ void BiPo::initialize(const datatools::properties & setup_,
     
     _root_tree_reconstructed_1e1a_topology_tracker_sel_ = new TTree("tree_rec_1e1a_tracker", "tree_rec_1e1a_tracker");
     _root_tree_reconstructed_1e1a_topology_tracker_sel_->SetDirectory(_root_file_);
+    _root_tree_reconstructed_1e1a_topology_tracker_sel_->Branch("event_id", &_root_variables_topologies_.event_id);
     _root_tree_reconstructed_1e1a_topology_tracker_sel_->Branch("sd.primary_electrons_vertex", &_root_variables_topologies_.electron_vertex);
     _root_tree_reconstructed_1e1a_topology_tracker_sel_->Branch("ptd.reconstructed_electrons_calo_energy", &_root_variables_topologies_.electron_calo_energy);
     _root_tree_reconstructed_1e1a_topology_tracker_sel_->Branch("ptd.reconstructed_alphas_track_length", &_root_variables_topologies_.alpha_track_length);
@@ -145,6 +147,8 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
     /// creating my event to store all the info
     
     event _event_;
+    
+    _root_variables_topologies_.event_id = _event_.event_id - 1;
     
     
     ///////////////////////////////////////////
@@ -279,14 +283,14 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
         
             _particle_.trajectory_pattern = "curved";
             
-            double temp;
+            double t_calo;
 
             if(my_pt.has_associated_calorimeter_hits())
-                temp = my_pt.get_associated_calorimeter_hits()[0].get().get_time() - 2.18484482E-9; //correction for average path
+                t_calo = my_pt.get_associated_calorimeter_hits()[0].get().get_time() - 2.18484482E-9; //correction for average path
                 
-            else temp = pow(-1,0.5);
+            else t_calo = pow(-1,0.5);
             
-            _particle_.reconstructed_time = temp;
+            _particle_.reconstructed_time = t_calo;
         }
         
         /// if trajectory is straight, the reconstruced time is retrieved from fit on trajectory
@@ -295,27 +299,18 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
             
             _particle_.trajectory_pattern = "straight";
             
-            double temp = my_tj.get_auxiliaries().fetch_real_scalar("t0");
+            double t_0;
             
-            double t0;
             if (my_tj.get_auxiliaries().has_key("t0")) {
-                t0 = my_tj.get_auxiliaries().fetch_real("t0");
-                //std::cout << "t0 = " << t0/CLHEP::s << " seconds" << std::endl;
-                //std::cout << "t0 = " << t0/CLHEP::ns << " ns" << std::endl;
+                
+                t_0 = my_tj.get_auxiliaries().fetch_real("t0");
             }
             
-            
-            if(temp > 2500.) temp /= 1000.; // THERE IS A BIG PROBLEM WITH UNITS HERE!!!
-            
-            // if alpha finder has done the fit, the fitted time is not good
-            if(my_tj.get_cluster().get_number_of_hits() < 3) temp = pow(-1,0.5);
-            
-            _particle_.reconstructed_time = t0/CLHEP::ns;
-            _root_variables_reconstructed_particles_.fitted_time = t0/CLHEP::ns;
+            _particle_.reconstructed_time = t_0/CLHEP::ns;
+            _root_variables_reconstructed_particles_.fitted_time = t_0/CLHEP::ns;
 
         }
         else {n_wierdos++;}
-        //std::cout << std::endl;
 
         _root_variables_reconstructed_particles_.track_length = my_tj.get_pattern().get_shape().get_length();
         
