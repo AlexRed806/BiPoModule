@@ -8,6 +8,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <cmath>
 
 #include "TFile.h"
 #include "TTree.h"
@@ -51,14 +52,39 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
     char simul_explicit_names[n_files][64] = {"^{214}Bi-Po events in source bulk","^{214}Bi-Po events on source surface","^{214}Bi-Po events on tracker wires surface"};
     char pdf_explicit_names[n_files][64] = {"fitted PDF of source bulk ^{214}Bi-Po","fitted PDF of source suface ^{214}Bi-Po","fitted PDF of tracker ^{214}Bi-Po"};
 
-    TH1D *h_track_length[n_files];
-    for(int i_file=first_file; i_file<n_files; i_file+=step) {
-        sprintf(name,"track_length_%s",simul_names[i_file]);
-        h_track_length[i_file] = new TH1D(name,simul_explicit_names[i_file],100,0,500);
-    }
-    TH1D *h_cumulative_track_length = new TH1D("cumulative_track_length","^{214}Bi-Po events - combined vertexes",100,0,500);
+    /// Root variables histograms definition ///
+    
+    TH1D *h_a_track_length[n_files];
+    TH1D *h_a_n_geiger[n_files];
+    TH1D *h_e_calo_energy[n_files];
+    TH1D *h_delta_t[n_files];
 
-    TH1D *h_pseudo_track_length = new TH1D("pseudo_track_length","pseudo_track_length",100,0,500);
+    for(int i_file=first_file; i_file<n_files; i_file+=step) {
+        
+        sprintf(name,"a_track_length_%s",simul_names[i_file]);
+        h_a_track_length[i_file] = new TH1D(name,simul_explicit_names[i_file],100,0,500);
+        sprintf(name,"a_n_geiger_%s",simul_names[i_file]);
+        h_a_n_geiger[i_file] = new TH1D(name,simul_explicit_names[i_file],10,0,10);
+        sprintf(name,"e_calo_energy_%s",simul_names[i_file]);
+        h_e_calo_energy[i_file] = new TH1D(name,simul_explicit_names[i_file],100,0,5);
+        sprintf(name,"delta_t_%s",simul_names[i_file]);
+        h_delta_t[i_file] = new TH1D(name,simul_explicit_names[i_file],100,0,2500000);
+
+    }
+    
+    TH1D *h_cumulative_a_track_length = new TH1D("cumulative_a_track_length","^{214}Bi-Po events - combined vertexes",100,0,500);
+    TH1D *h_cumulative_a_n_geiger = new TH1D("cumulative_a_n_geiger","^{214}Bi-Po events - combined vertexes",10,0,10);
+    TH1D *h_cumulative_e_calo_energy = new TH1D("cumulative_e_calo_energy","^{214}Bi-Po events - combined vertexes",100,0,5);
+    TH1D *h_cumulative_delta_t = new TH1D("cumulative_delta_t","^{214}Bi-Po events - combined vertexes",100,0,2500000);
+
+    ///
+
+    TH1D *h_pseudo_a_track_length = new TH1D("pseudo_a_track_length","pseudo_a_track_length",100,0,500);
+    
+    TH2D *h_vtx_top_view = new TH2D("h_vtx_top_view","h_vtx_top_view",100,-500,500,100,-3000,3000);
+    TH2D *h_vtx_side_view = new TH2D("h_vtx_side_view","h_vtx_side_view",100,-500,500,100,-2000,2000);
+
+    TH2D *hh_track_length_vs_source_dist = new TH2D("hh_track_length_vs_source_dist","hh_track_length_vs_source_dist",72,-10,350,51,0,510);
 
     for(int i_file=first_file; i_file<n_files; i_file+=step) {
         
@@ -79,11 +105,15 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
 
         tree_1e1a->Add(simul_name.str().data());
         
-        int n_geiger;
-        double track_length, delta_t;
+        std::vector<double> *e_vtx = 0;
+        double e_reco_energy;
+        int a_n_geiger;
+        double a_track_length, delta_t;
         
-        tree_1e1a->SetBranchAddress("ptd.reconstructed_alphas_n_geiger_hits",&n_geiger);
-        tree_1e1a->SetBranchAddress("ptd.reconstructed_alphas_track_length",&track_length);
+        tree_1e1a->SetBranchAddress("sd.primary_electrons_vertex",&e_vtx);
+        tree_1e1a->SetBranchAddress("ptd.reconstructed_electrons_calo_energy",&e_reco_energy);
+        tree_1e1a->SetBranchAddress("ptd.reconstructed_alphas_n_geiger_hits",&a_n_geiger);
+        tree_1e1a->SetBranchAddress("ptd.reconstructed_alphas_track_length",&a_track_length);
         tree_1e1a->SetBranchAddress("ptd.reconstructed_1e1a_delta_t",&delta_t);
 
         Long64_t nentries = tree_1e1a->GetEntries();
@@ -94,43 +124,169 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
         for (Long64_t i=0;i<nentries;i++) {
             tree_1e1a->GetEntry(i);
             
+            
+            if(i<10) {
+                cout << delta_t << endl;
+                //cout << e_vtx->size() << endl;
+                //cout << e_vtx->at(0) <<" "<<e_vtx->at(1) <<" "<<e_vtx->at(2) <<endl;
+                //cout << e_reco_energy << endl;
+                //cout << "distance from source: " << abs((*e_vtx)[0]) << endl;;
+            }
+            
             double exposure_correction = 1./(mc_exposures[i_file]);
             
-            h_track_length[i_file]->Fill(track_length,exposure_correction);
-            h_cumulative_track_length->Fill(track_length,exposure_correction);
+            h_a_track_length[i_file]->Fill(a_track_length,exposure_correction);
+            h_a_n_geiger[i_file]->Fill(a_n_geiger,exposure_correction);
+            h_e_calo_energy[i_file]->Fill(e_reco_energy,exposure_correction);
+            h_delta_t[i_file]->Fill(delta_t,exposure_correction);
+            
+            h_cumulative_a_track_length->Fill(a_track_length,exposure_correction);
+            h_cumulative_a_n_geiger->Fill(a_n_geiger,exposure_correction);
+            h_cumulative_e_calo_energy->Fill(e_reco_energy,exposure_correction);
+            h_cumulative_delta_t->Fill(delta_t,exposure_correction);
+
+            h_vtx_top_view->Fill(((*e_vtx)[0]),((*e_vtx)[1]));
+            h_vtx_side_view->Fill(((*e_vtx)[0]),((*e_vtx)[2]));
+
+            hh_track_length_vs_source_dist->Fill(abs((*e_vtx)[0]),a_track_length);
 
         }
 
     }
+    
+    /// Plots ///
+    
+    TCanvas *c_vtx_top = new TCanvas("c_vtx_top","c_vtx_top",1961,344,700,502);
+    h_vtx_top_view->Draw("colz");
+    
+    TCanvas *c_vtx_side = new TCanvas("c_vtx_side","c_vtx_side",1961,344,700,502);
+    h_vtx_side_view->Draw("colz");
+    
+    TCanvas *c_length_vs_dist = new TCanvas("c_length_vs_dist","c_length_vs_dist",1961,344,700,502);
+    c_length_vs_dist->SetLogz();
+    //hh_track_length_vs_source_dist->SetMarkerStyle(7);
+    hh_track_length_vs_source_dist->Draw("colz");
 
     
-    TCanvas *c = new TCanvas("track_length","track_length",1961,344,700,502);
-    TLegend *l = new TLegend(0.45,0.7,0.89,0.89);
+    TCanvas *c_a_track_length = new TCanvas("a_track_length","a_track_length",1961,344,700,502);
+    TLegend *l_a_track_length = new TLegend(0.45,0.7,0.89,0.89);
 
-    h_cumulative_track_length->GetXaxis()->SetTitle("#alpha track length (mm)");
-    h_cumulative_track_length->GetYaxis()->SetTitle("(s^{-1})");
-    h_cumulative_track_length->SetLineWidth(2);
-    h_cumulative_track_length->SetLineColor(1);
-    h_cumulative_track_length->SetFillStyle(0);
-    h_cumulative_track_length->Draw("hist");
+    h_cumulative_a_track_length->GetXaxis()->SetTitle("#alpha track length (mm)");
+    h_cumulative_a_track_length->GetYaxis()->SetTitle("(s^{-1})");
+    h_cumulative_a_track_length->SetLineWidth(2);
+    h_cumulative_a_track_length->SetLineColor(1);
+    h_cumulative_a_track_length->SetFillStyle(0);
+    h_cumulative_a_track_length->Draw("hist");
     
-    l->AddEntry(h_cumulative_track_length,h_cumulative_track_length->GetTitle(),"lep");
-    h_cumulative_track_length->SetTitle("");
+    l_a_track_length->AddEntry(h_cumulative_a_track_length,h_cumulative_a_track_length->GetTitle(),"lep");
+    h_cumulative_a_track_length->SetTitle("");
     
     for(int i_file=first_file; i_file<n_files; i_file+=step) {
             
-        h_track_length[i_file]->SetLineWidth(2);
-        h_track_length[i_file]->SetLineColor(i_file+2);
-        h_track_length[i_file]->SetFillColor(i_file+2);
-        h_track_length[i_file]->SetFillStyle(3003);
-        h_track_length[i_file]->Draw("histsames");
+        h_a_track_length[i_file]->SetLineWidth(2);
+        h_a_track_length[i_file]->SetLineColor(i_file+2);
+        h_a_track_length[i_file]->SetFillColor(i_file+2);
+        h_a_track_length[i_file]->SetFillStyle(3003);
+        h_a_track_length[i_file]->Draw("histsames");
         
-        l->AddEntry(h_track_length[i_file],h_track_length[i_file]->GetTitle(),"lep");
-        h_track_length[i_file]->SetTitle("");
+        l_a_track_length->AddEntry(h_a_track_length[i_file],h_a_track_length[i_file]->GetTitle(),"lep");
+        h_a_track_length[i_file]->SetTitle("");
     }
-    if(step == 1) h_track_length[1]->Draw("histsames");
-    l->Draw();
+    if(step == 1) h_a_track_length[1]->Draw("histsames");
+    l_a_track_length->Draw();
+    c_a_track_length->SaveAs("a_track_length.pdf");
     
+    
+    TCanvas *c_a_n_geiger = new TCanvas("a_n_geiger","a_n_geiger",1961,344,700,502);
+    TLegend *l_a_n_geiger = new TLegend(0.45,0.7,0.89,0.89);
+    
+    h_cumulative_a_n_geiger->GetXaxis()->SetTitle("#alpha geiger hits");
+    h_cumulative_a_n_geiger->GetYaxis()->SetTitle("(s^{-1})");
+    h_cumulative_a_n_geiger->SetLineWidth(2);
+    h_cumulative_a_n_geiger->SetLineColor(1);
+    h_cumulative_a_n_geiger->SetFillStyle(0);
+    h_cumulative_a_n_geiger->Draw("hist");
+    
+    l_a_n_geiger->AddEntry(h_cumulative_a_n_geiger,h_cumulative_a_n_geiger->GetTitle(),"lep");
+    h_cumulative_a_n_geiger->SetTitle("");
+    
+    for(int i_file=first_file; i_file<n_files; i_file+=step) {
+        
+        h_a_n_geiger[i_file]->SetLineWidth(2);
+        h_a_n_geiger[i_file]->SetLineColor(i_file+2);
+        h_a_n_geiger[i_file]->SetFillColor(i_file+2);
+        h_a_n_geiger[i_file]->SetFillStyle(3003);
+        h_a_n_geiger[i_file]->Draw("histsames");
+        
+        l_a_n_geiger->AddEntry(h_a_n_geiger[i_file],h_a_n_geiger[i_file]->GetTitle(),"lep");
+        h_a_n_geiger[i_file]->SetTitle("");
+    }
+    if(step == 1) h_a_n_geiger[1]->Draw("histsames");
+    l_a_n_geiger->Draw();
+    c_a_n_geiger->SaveAs("a_n_geiger.pdf");
+
+    
+    TCanvas *c_e_calo_energy = new TCanvas("e_calo_energy","e_calo_energy",1961,344,700,502);
+    TLegend *l_e_calo_energy = new TLegend(0.45,0.7,0.89,0.89);
+    
+    h_cumulative_e_calo_energy->GetXaxis()->SetTitle("electron Edep in calo (MeV)");
+    h_cumulative_e_calo_energy->GetYaxis()->SetTitle("(s^{-1})");
+    h_cumulative_e_calo_energy->SetLineWidth(2);
+    h_cumulative_e_calo_energy->SetLineColor(1);
+    h_cumulative_e_calo_energy->SetFillStyle(0);
+    h_cumulative_e_calo_energy->Draw("hist");
+    
+    l_e_calo_energy->AddEntry(h_cumulative_e_calo_energy,h_cumulative_e_calo_energy->GetTitle(),"lep");
+    h_cumulative_e_calo_energy->SetTitle("");
+    
+    for(int i_file=first_file; i_file<n_files; i_file+=step) {
+        
+        h_e_calo_energy[i_file]->SetLineWidth(2);
+        h_e_calo_energy[i_file]->SetLineColor(i_file+2);
+        h_e_calo_energy[i_file]->SetFillColor(i_file+2);
+        h_e_calo_energy[i_file]->SetFillStyle(3003);
+        h_e_calo_energy[i_file]->Draw("histsames");
+        
+        l_e_calo_energy->AddEntry(h_e_calo_energy[i_file],h_e_calo_energy[i_file]->GetTitle(),"lep");
+        h_e_calo_energy[i_file]->SetTitle("");
+    }
+    if(step == 1) h_e_calo_energy[1]->Draw("histsames");
+    l_e_calo_energy->Draw();
+    c_e_calo_energy->SaveAs("e_calo_energy.pdf");
+
+    
+    TCanvas *c_delta_t = new TCanvas("delta_t","delta_t",1961,344,700,502);
+    TLegend *l_delta_t = new TLegend(0.45,0.7,0.89,0.89);
+    
+    c_delta_t->SetLogy();
+    
+    h_cumulative_delta_t->GetXaxis()->SetTitle("e-#alpha #Delta t (#mu s)");
+    h_cumulative_delta_t->GetYaxis()->SetTitle("(s^{-1})");
+    h_cumulative_delta_t->SetLineWidth(2);
+    h_cumulative_delta_t->SetLineColor(1);
+    h_cumulative_delta_t->SetFillStyle(0);
+    h_cumulative_delta_t->Draw("hist");
+    
+    l_delta_t->AddEntry(h_cumulative_delta_t,h_cumulative_delta_t->GetTitle(),"lep");
+    h_cumulative_delta_t->SetTitle("");
+    
+    for(int i_file=first_file; i_file<n_files; i_file+=step) {
+        
+        h_delta_t[i_file]->SetLineWidth(2);
+        h_delta_t[i_file]->SetLineColor(i_file+2);
+        h_delta_t[i_file]->SetFillColor(i_file+2);
+        h_delta_t[i_file]->SetFillStyle(3003);
+        h_delta_t[i_file]->Draw("histsames");
+        
+        l_delta_t->AddEntry(h_delta_t[i_file],h_delta_t[i_file]->GetTitle(),"lep");
+        h_delta_t[i_file]->SetTitle("");
+    }
+    if(step == 1) h_delta_t[1]->Draw("histsames");
+    l_delta_t->Draw();
+    c_delta_t->SaveAs("delta_t.pdf");
+    
+    
+    /// Statistical analysis ///
     
     TH1D *h_fitted_activities[n_files];
     for(int i_file=first_file; i_file<n_files; i_file+=step) {
@@ -148,7 +304,7 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
     RooRealVar track_length_obs("track_length_obs","track_length_obs",0,500);
     RooRealVar *fitted_activity[n_files];
     
-    RooDataHist datahist("datahist","datahist",track_length_obs, h_cumulative_track_length);
+    RooDataHist datahist("datahist","datahist",track_length_obs, h_cumulative_a_track_length);
     RooHistPdf pdf("pdf","pdf",track_length_obs,datahist,poly_order);
     
     RooDataHist *datahists[n_files];
@@ -162,7 +318,7 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
         var_name << "fitted_activity_" << simul_names[i_file];
         
         datahists[i_file] = new RooDataHist(dh_name.str().data(),dh_name.str().data(),
-                                            track_length_obs, h_track_length[i_file]);
+                                            track_length_obs, h_a_track_length[i_file]);
         pdfs[i_file] = new RooHistPdf(pdf_name.str().data(),pdf_name.str().data(),track_length_obs,
                                       *datahists[i_file],poly_order);
         //fitted_activity[i_file] = new RooRealVar(var_name.str().data(),var_name.str().data(),activities[i_file]*given_exposure*0.,activities[i_file]*given_exposure*10.);
@@ -177,7 +333,7 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
 
     for(int i_pseudo=0;i_pseudo<n_pseudo;i_pseudo++) {
         
-        RooDataSet * data = pdf.generate( track_length_obs, h_cumulative_track_length->Integral()*given_exposure);
+        RooDataSet * data = pdf.generate( track_length_obs, h_cumulative_a_track_length->Integral()*given_exposure);
         
         data->SetName("data");
         model.fitTo(*data,PrintLevel(-1));
@@ -192,48 +348,48 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
             TCanvas *c_mock = new TCanvas("cacca","puzza",1961,344,700,502);
             TLegend *l_mock = new TLegend(0.5,0.65,0.89,0.89);
             
-            //h_cumulative_track_length->SetTitle("");
-            TH1 *h_cumulative_track_length_data = data->createHistogram("track_length_obs",100);
-            h_cumulative_track_length_data->GetXaxis()->SetTitle("#alpha track length (mm)");
-            //h_cumulative_track_length_data->GetYaxis()->SetTitle("(s^{-1})");
-            h_cumulative_track_length_data->SetLineWidth(2);
-            h_cumulative_track_length_data->SetLineColor(1);
-            h_cumulative_track_length_data->SetFillStyle(0);
-            h_cumulative_track_length_data->Draw();
-            h_cumulative_track_length_data->SetTitle("mock data (30 days exposure)");
-            l_mock->AddEntry(h_cumulative_track_length_data,h_cumulative_track_length_data->GetTitle(),"lep");
-            h_cumulative_track_length_data->SetTitle("");
+            //h_cumulative_a_track_length->SetTitle("");
+            TH1 *h_cumulative_a_track_length_data = data->createHistogram("track_length_obs",100);
+            h_cumulative_a_track_length_data->GetXaxis()->SetTitle("#alpha track length (mm)");
+            //h_cumulative_a_track_length_data->GetYaxis()->SetTitle("(s^{-1})");
+            h_cumulative_a_track_length_data->SetLineWidth(2);
+            h_cumulative_a_track_length_data->SetLineColor(1);
+            h_cumulative_a_track_length_data->SetFillStyle(0);
+            h_cumulative_a_track_length_data->Draw();
+            h_cumulative_a_track_length_data->SetTitle("mock data (30 days exposure)");
+            l_mock->AddEntry(h_cumulative_a_track_length_data,h_cumulative_a_track_length_data->GetTitle(),"lep");
+            h_cumulative_a_track_length_data->SetTitle("");
 
-            TH1 *h_cumulative_track_length_mock = model.createHistogram("track_length_obs",100);
-            //h_cumulative_track_length_mock->GetXaxis()->SetTitle("#alpha track length (mm)");
-            //h_cumulative_track_length_mock->GetYaxis()->SetTitle("(s^{-1})");
-            //h_cumulative_track_length_mock->Scale(fitted_activity[0]->getValV()+fitted_activity[1]->getValV()+fitted_activity[2]->getValV());
-            h_cumulative_track_length_mock->Scale(5);
-            h_cumulative_track_length_mock->SetLineWidth(2);
-            h_cumulative_track_length_mock->SetLineColor(16);
-            h_cumulative_track_length_mock->SetFillColor(16);
-            h_cumulative_track_length_mock->SetFillStyle(3003);
-            h_cumulative_track_length_mock->Draw("histsames");
-            h_cumulative_track_length_mock->SetTitle("global PDF fitted to mock data");
-            l_mock->AddEntry(h_cumulative_track_length_mock,h_cumulative_track_length_mock->GetTitle(),"l");
-            h_cumulative_track_length_mock->SetTitle("");
+            TH1 *h_cumulative_a_track_length_mock = model.createHistogram("track_length_obs",100);
+            //h_cumulative_a_track_length_mock->GetXaxis()->SetTitle("#alpha track length (mm)");
+            //h_cumulative_a_track_length_mock->GetYaxis()->SetTitle("(s^{-1})");
+            //h_cumulative_a_track_length_mock->Scale(fitted_activity[0]->getValV()+fitted_activity[1]->getValV()+fitted_activity[2]->getValV());
+            h_cumulative_a_track_length_mock->Scale(5);
+            h_cumulative_a_track_length_mock->SetLineWidth(2);
+            h_cumulative_a_track_length_mock->SetLineColor(16);
+            h_cumulative_a_track_length_mock->SetFillColor(16);
+            h_cumulative_a_track_length_mock->SetFillStyle(3003);
+            h_cumulative_a_track_length_mock->Draw("histsames");
+            h_cumulative_a_track_length_mock->SetTitle("global PDF fitted to mock data");
+            l_mock->AddEntry(h_cumulative_a_track_length_mock,h_cumulative_a_track_length_mock->GetTitle(),"l");
+            h_cumulative_a_track_length_mock->SetTitle("");
 
-            TH1 *h_track_length_mock[n_files];
+            TH1 *h_a_track_length_mock[n_files];
             
             for(int i_file=first_file; i_file<n_files; i_file+=step) {
 
-                h_track_length_mock[i_file] = pdfs[i_file]->createHistogram("track_length_obs",100);
-                h_track_length_mock[i_file]->Scale(fitted_activity[i_file]->getValV());
-                h_track_length_mock[i_file]->SetLineWidth(2);
-                h_track_length_mock[i_file]->SetLineColor(i_file+2);
-                h_track_length_mock[i_file]->SetFillColor(i_file+2);
-                h_track_length_mock[i_file]->SetFillStyle(3003);
-                h_track_length_mock[i_file]->Draw("histsames");
-                h_track_length_mock[i_file]->SetTitle(pdf_explicit_names[i_file]);
-                l_mock->AddEntry(h_track_length_mock[i_file],h_track_length_mock[i_file]->GetTitle(),"l");
-                h_track_length_mock[i_file]->SetTitle("");
+                h_a_track_length_mock[i_file] = pdfs[i_file]->createHistogram("track_length_obs",100);
+                h_a_track_length_mock[i_file]->Scale(fitted_activity[i_file]->getValV());
+                h_a_track_length_mock[i_file]->SetLineWidth(2);
+                h_a_track_length_mock[i_file]->SetLineColor(i_file+2);
+                h_a_track_length_mock[i_file]->SetFillColor(i_file+2);
+                h_a_track_length_mock[i_file]->SetFillStyle(3003);
+                h_a_track_length_mock[i_file]->Draw("histsames");
+                h_a_track_length_mock[i_file]->SetTitle(pdf_explicit_names[i_file]);
+                l_mock->AddEntry(h_a_track_length_mock[i_file],h_a_track_length_mock[i_file]->GetTitle(),"l");
+                h_a_track_length_mock[i_file]->SetTitle("");
             }
-            if(step == 1) h_track_length_mock[1]->Draw("histsames");
+            if(step == 1) h_a_track_length_mock[1]->Draw("histsames");
             l_mock->Draw();
             
             TCanvas *c_mock1 = new TCanvas("track_length_pseudo","track_length_pseudo",1961,344,700,502);
@@ -253,7 +409,7 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
         }
     }
 
-    //IMPORTANT: fitted_activity[0]->getValV() is equivalent to h_track_length[0]->Integral()*given_exposure
+    //IMPORTANT: fitted_activity[0]->getValV() is equivalent to h_a_track_length[0]->Integral()*given_exposure
 
     sprintf(name,"./fitted_ab_%s_sel.txt",type_of_sel.data());
     ofstream f_ab (name,ios::app);
