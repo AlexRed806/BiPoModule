@@ -76,7 +76,7 @@ struct mc_particle {
     std::vector<double> vertex;
 };
 struct event {
-    static unsigned int event_id;
+    //static unsigned int event_id;
     unsigned int number_of_electrons;
     unsigned int number_of_alphas;
     unsigned int number_of_gammas;
@@ -85,7 +85,7 @@ struct event {
     double prompt_time, delayed_time;
     
     event(): number_of_electrons(0), number_of_alphas(0), number_of_gammas(0), prompt_time(pow(-1,0.5)), delayed_time(pow(-1,0.5)) {
-        event_id++;
+      //event_id++;
     }
 };
 

@@ -134,6 +134,8 @@ void BiPo::initialize(const datatools::properties & setup_,
     
     n_wierdos = 0;
 
+    _root_variables_topologies_.event_id = -1;
+    
     this->_set_initialized(true);    
 }
 
@@ -148,8 +150,8 @@ dpp::base_module::process_status BiPo::process(datatools::things & record_) {
     
     event _event_;
     
-    _root_variables_topologies_.event_id = _event_.event_id - 1;
-    
+    //_root_variables_topologies_.event_id = _event_.event_id - 1;
+    _root_variables_topologies_.event_id += 1;
     
     ///////////////////////////////////////////
     ////////////  MONTE CARLO DATA  ///////////
