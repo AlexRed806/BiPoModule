@@ -345,7 +345,7 @@ void BiPo(const unsigned int n_events, const unsigned int n_pseudo, const unsign
 
         if(verbose) {
         
-            TCanvas *c_mock = new TCanvas("cacca","puzza",1961,344,700,502);
+            TCanvas *c_mock = new TCanvas("mock","mock",1961,344,700,502);
             TLegend *l_mock = new TLegend(0.5,0.65,0.89,0.89);
             
             //h_cumulative_a_track_length->SetTitle("");
